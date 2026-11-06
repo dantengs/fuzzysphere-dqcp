@@ -1,0 +1,69 @@
+# Reference plan for N = 11: the sectors, L ranges, windows and cuts of the original study, in the plan format.
+# All relative paths are under your data root (bin/tcc.jl --data=DIR, TCC_DATA, or user.toml).  g is the tuned
+# coupling of the original study (F(g) = 0, docs/en/METHODS.md section 4); retune with the tune stage if you change
+# the model.  Check the block dimensions (METHODS section 2.4) and your resources before running N >= 8.
+# Run:  julia --project=env --threads=T bin/tcc.jl configs/examples/N11.toml
+[run]
+N = 11
+g = 0.9753477137817606                       # tuned by F(g) = 0, docs/en/METHODS.md section 4
+out = "results/main/N11"
+
+[plan]
+sectors = "all"
+lmax = 4                        # blocks L = 0..lmax; target windows to L = lmax+1
+delta_max = 6.2                  # target windows cover KK sources up to Delta = 6.2
+half = true
+steps = ["coverage", "ope3", "parity", "parity_join", "fullq", "stageb", "rawtarget"]
+
+[basis]
+segment_checkpoint = ""          # "" = build the basis in the run; or a segment_spaces.ckpt you built before
+
+[spectrum]
+lmax = 3                         # legacy physics key (part of the run identity)
+exchange = true
+tol = 1.0e-10
+parity = "both"
+nev = 48
+residency = "auto"               # pair above 16e9 bytes of segment basis (N12), else all
+
+[coverage]
+delta_cut = 6.0
+kmax = 400
+
+[targets]
+initial_nev = 48
+max_nev = 4000
+guard = 1.0e-5
+
+[kk]
+cache = "kk_cache"
+
+[threads]
+native = 8
+tile = 64
+
+[ope3]
+out = "results/ope3/N11"
+src_dmax = 5.0
+pair_dmax = 6.5
+int_ranks = [1, 2, 3, 4]
+half_lmax = 3
+half_nev = 24
+threshold = 0.25
+image_bytes = 1.6e10
+
+[parity]
+out = "results/parity/N11"
+targets = true
+
+[fullq]
+out = "results/fullq/N11"
+
+[stageb]
+sectors = ["half"]
+max_nev = 384
+raw_delta_max = 6.8
+lmax = 3                         # KK sources / OPE spins 0..3 (raw windows L0-4)
+
+[stageb.half]
+out = "results/stageb/half/N11"

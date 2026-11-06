@@ -1,0 +1,13 @@
+{
+  "_comment": "Roots for analysis/tools/localize.py. Copy to analysis/paths.local.json (ignored by git) and set your own directories. ${ANALYSIS} is filled automatically.",
+  "_INPUTS": "exports of cluster/export_kk.jl and export_ope_edges.jl plus the run physics tables: kk/N<n>/, ope/N<n>/, physics/N<n>/ (parity.csv, ope3.toml, ...)",
+  "INPUTS": "/path/to/your/analysis/inputs",
+  "_OPE_ROWS": "combined per-N OPE rows (CSV) of your production runs",
+  "OPE_ROWS": "/path/to/your/analysis/ope/per_N_rows.csv",
+  "_STAGEB_EXPORT": "output of cluster/export_stageB.sbatch: half/N<n>, 11/N<n>, and imagenorm.csv",
+  "STAGEB_EXPORT": "/path/to/your/analysis/stageB_export",
+  "_STAGEB_RUNS": "parent of the Tcc stageb out directories: half/N<n>/xy_blocks_raw.csv, 11/N<n>/xy_blocks_raw.csv",
+  "STAGEB_RUNS": "/path/to/your/data/stageb",
+  "_RAWTARGET_EXPORT": "exports of the rawtarget step: half/N<n>/export",
+  "RAWTARGET_EXPORT": "/path/to/your/analysis/rawtarget_export"
+}

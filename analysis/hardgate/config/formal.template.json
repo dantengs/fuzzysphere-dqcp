@@ -1,0 +1,142 @@
+{
+  "run_id": "formal_example",
+  "status": "Template of a formal rule-A run (rules v0.5.0, descendant_span_v1 option B). Fill the ${...} roots with analysis/tools/localize.py; set sizes and fit windows to the sizes you computed.",
+  "sizes": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "main_fit_sizes": [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "window_fit_sizes": [
+    [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
+  ],
+  "Delta_max": 6.25,
+  "L_max": 4,
+  "kk_export": "${INPUTS}/kk",
+  "physics": "${INPUTS}/physics",
+  "ope_per_N_rows": "${OPE_ROWS}",
+  "kappa_rule": {
+    "pool_sizes": [
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "search_range": [
+      0.001,
+      0.31622776601683794
+    ],
+    "bin_width_log10": 0.25,
+    "definition": "lowest-count bin of log10(kappa) histogram, kappa=K2/(2 Delta), Delta<=Delta_max, zero-K2 modes excluded"
+  },
+  "raw_class_weight": 0.9,
+  "family_max_level": 7,
+  "family_Delta_margin": 0.5,
+  "blind": true,
+  "tracking_rule": {
+    "max_jump": 0.3,
+    "ambiguity_margin": 0.05
+  },
+  "family_rule": {
+    "null_singular_value": 0.3,
+    "multiplicity": "3d generic-Delta P^n spin content",
+    "identity_has_no_family": true
+  },
+  "copy_match_tol": 0.02,
+  "ope_export": "${INPUTS}/ope",
+  "raw_class_rule": {
+    "gate": 0.9,
+    "no_family_coverage_max_descendant_weight": 0.3,
+    "classes": [
+      "primary",
+      "descendant",
+      "nonprimary_partial_family_coverage",
+      "nonprimary_no_family_coverage",
+      "mixed_primary_descendant",
+      "unclassifiable_unguarded",
+      "unclassifiable_not_KK_source"
+    ]
+  },
+  "ope_rule": {
+    "integer": "exact recontraction with blind primary vectors (fullQ edges)",
+    "half": "production vectors, identity by (N,C2,L,P,Delta) match",
+    "exact_tol": 1e-06,
+    "approx_tol": 0.002
+  },
+  "stageB": [
+    {
+      "sector": "half",
+      "sizes": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "export": "${STAGEB_EXPORT}/half",
+      "cg_sector": "half",
+      "production_rows": "${STAGEB_RUNS}/half/N{N}/xy_blocks_raw.csv",
+      "rawtarget": "${RAWTARGET_EXPORT}/half/N{N}/export",
+      "rawtarget_sizes": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "sector": "11ext",
+      "sizes": [
+        5,
+        6,
+        7
+      ],
+      "export": "${STAGEB_EXPORT}/11",
+      "cg_sector": "s1_s1",
+      "production_rows": "${STAGEB_RUNS}/11/N{N}/xy_blocks_raw.csv"
+    }
+  ],
+  "stageB_parity_rule": "P = pseg * (-1)^(N+L), verified against every integer copy",
+  "ope_fullq_rows_extra": {},
+  "stageB_imagenorm": "${STAGEB_EXPORT}/imagenorm.csv",
+  "descendant_span": {
+    "rule_config": "${ANALYSIS}/hardgate/config/descendant_span_v1.json",
+    "rule_sha256": "d544f9b939d0c2de028d58d2131d11b578c172306f296d798cb55acb7314291c",
+    "option": "B",
+    "role": "official option"
+  },
+  "window_policy": "global Delta_max for every N; levels above a block's coverage are guarded by the KK frontier rule (no N-specific tuning)"
+}

@@ -1,0 +1,36 @@
+# Example: complete small run (N = 6).  julia --project=<env> --threads=16 bin/tcc.jl configs/example_N6.toml
+[run]
+N = 6
+g = 0.95
+out = "runs/N6_g0.95"
+stages = ["basis", "spectrum", "targets", "kk", "ope", "summary"]
+
+[basis]
+segment_checkpoint = ""          # "" = build; otherwise a frozen segment_spaces.ckpt directory
+
+[spectrum]
+lmax = 2
+blocks = "all"                   # or [[0,0,0],[0,1,1],...]
+nev = 12
+exchange = true
+parity = "both"                  # both | plus | minus
+residency = "auto"               # auto = all for N <= 11, pair for N >= 12; or all | pair | minimal
+concurrency = 1                  # blocks solved at once (residency all)
+tol = 1e-10
+
+[threads]
+native = 8
+tile = 64
+build_blas = 16
+solver_blas = 16
+
+[targets]
+initial_nev = 12
+max_nev = 100
+
+[kk]
+thresholds = [0.05, 0.1, 0.25, 0.5]
+cache = "runs/kk_cache"
+
+[ope]
+edges = [[0, 0, 0], [2, 0, 2]]   # Gamma^2 rank, source L, target L on (0,0)

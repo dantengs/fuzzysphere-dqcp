@@ -1,0 +1,16 @@
+# Your machine-specific settings.  Copy to user.toml (ignored by git) and edit; nothing here is committed.
+#
+#   cp user.example.toml user.toml
+#
+# bin/tcc.jl resolves every relative path of a run file (run.out, step outs, kk.cache, basis.segment_checkpoint, ...)
+# against the data root.  Order: --data=DIR on the command line, then the environment variable TCC_DATA, then
+# [paths] data_root below, then the current directory.  A relative data_root is relative to the repository root.
+
+[paths]
+data_root = "data"                 # e.g. "/scratch/<you>/fuzzysphere" on a cluster, "D:/fuzzysphere" on Windows
+
+# Not read by the code; kept here so that your job scripts and notes have one place to look.
+[cluster]
+partition = ""                     # Slurm partition
+account = ""                       # Slurm account, if your cluster needs one
+julia = "julia"                    # path of the Julia 1.11 binary on the cluster

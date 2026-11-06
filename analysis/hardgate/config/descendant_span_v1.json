@@ -1,0 +1,84 @@
+{
+ "rule_id": "descendant_span_v1",
+ "frozen": "2026-10-25; confirmed by the user before any implementation or any run on data",
+ "document": "docs/RULES_descendant_span_v1.md",
+ "implemented_in": "v0.5.0-dev (not yet written); prerequisite: v0.4.1 fixes of review R1-R5 and R6 (full-assignment semantics)",
+ "user_confirmations": {
+  "1_scope": "option B is the official scope; option A is a comparator only",
+  "2_span_rule": "order-independent SVD truncation (S1) is official; greedy acceptance (S1') is a comparator only",
+  "3_budget_rule": "proposal R2 (forced dropping of directions) is removed; superseded by the dimension remark of S2",
+  "4_review_R6": "tracking ambiguity uses the full-assignment definition"
+ },
+ "parameters": {
+  "g": "raw_class_weight of the baseline config (0.90); the only numerical parameter",
+  "lambda_band": [0.5, 2.0],
+  "almost_primary_lambda_max": 1.0,
+  "parameter_origin": "lambda_band and almost_primary_lambda_max are taken unchanged from harden_v1.json T6_near_short",
+  "new_numerical_parameters": "none"
+ },
+ "S0_scope": {
+  "official": "option_B: S1-S4 act in every analyse_size call (integer sectors N5-12, stageB, sensitivity variants, T3 shrunk variants)",
+  "comparator_A": "S1-S3 only inside sectors flagged overcomplete by proposal R0 (harden_v1 T1 span_triage); all other sectors keep the v0.3.5 construction",
+  "selection_basis": "structural: the near-duplicate inflation of w_D is one numerical mechanism independent of whether a sector is overcomplete; not chosen from dry-run results or paper labels"
+ },
+ "S1_descendant_span": {
+  "per": "(pair, L) classification basis",
+  "H": "column concatenation of all family blocks B_f on this (pair, L); each B_f from _orth_top with NULL_SV = 0.3 (unchanged)",
+  "rule": "SVD H = U S V^T; keep left singular vectors with s_i^2 >= 1 - g; D = their span (replaces _orth(hstack, rtol=1e-6))",
+  "provenance": "for every dropped singular direction record its loadings V_i on the family columns (parent pid, level n, L') -> descendant_span_dropped.csv",
+  "comparator_S1_prime": "greedy acceptance in order (level n asc, parent Delta asc, singular value desc within a family); accept u iff ||(1-Pi_A) u||^2 >= 1 - g; report only levels whose class differs from S1"
+ },
+ "S2_conflict": {
+  "per": "(pair, L, C2, X, P) sector",
+  "Q": "primary subspace at kappa_thr (Qs['mid'])",
+  "principal_angles": "singular values of Q^T D; cos^2 theta_i = s_i^2 with principal pairs (p_i, d_i)",
+  "conflict": "every pair with cos^2 theta_i >= g; D' = D without d_i; Q = Q_clean (+) span{p_i}; C = span{p_i, d_i}",
+  "dimension_remark": "d_P + d_D > n_s forces an intersection (cos^2 = 1) and hence a conflict; overcomplete is a reporting flag only",
+  "conflict_pair_mode": "projected primary mode m with weight on span{p_i} >= 1 - g; not certified P until S3",
+  "forbidden": "orthogonalising D against Q (or Q against D) and declaring a winner",
+  "raw_level_order": [
+   "pass_P' AND pass_D' -> ambiguous_primary_descendant_overlap",
+   "pass_P' -> primary",
+   "pass_D' -> descendant",
+   "pass_old -> ambiguous_primary_descendant_conflict (to S3)",
+   "otherwise v0.3.5 unclassifiable / nonprimary / mixed rules with w_P = w(Q), w_D = w(D')"
+  ],
+  "definitions": {
+   "pass_P'": "guarded AND w(Q_clean) >= g",
+   "pass_D'": "w(D') >= g",
+   "pass_old": "(guarded AND w(Q) >= g) OR w(D) >= g"
+  },
+  "keep_old_column": "cls_v035"
+ },
+ "S3_resolution": {
+  "applies_to": "ambiguous_primary_descendant_conflict, ambiguous_primary_descendant_overlap, conflict_pair modes",
+  "a_cross_copy": "another (sA,sB) copy of the same phys_level_key lies in a conflict-free sector and is primary or descendant under S2 -> supports that side",
+  "b_K2_prediction": {
+   "evaluated_on": "the conflicting descendant direction d_i (not on the primary mode)",
+   "precondition": "d_i supported on guarded sources only; otherwise no evidence",
+   "parent": "family with the largest projection of d_i gives (Delta0, L0, n)",
+   "lambda": "(2 Delta0 + n - 3) n + L(L+1) - L0(L0+1)  [FFK 2602.04958 eq. 3.2]",
+   "near_short": "lambda < almost_primary_lambda_max -> no evidence (T6 territory)",
+   "supports_P": "K2(d_i) < lambda_band[0] * lambda",
+   "supports_D": "lambda_band[0] * lambda <= K2(d_i) <= lambda_band[1] * lambda",
+   "above_band": "no evidence"
+  },
+  "c_window": "fixed T3 (v0.4.1); unstable counts as opposing both sides",
+  "decision": "resolved to a side iff >= 1 item supports it, no item supports the other side, and (c) does not oppose; labels primary_resolved / descendant_resolved with the evidence used; otherwise stays ambiguous",
+  "disclosure": "count of cases resolved by (b) alone is reported separately; if they dominate, the appendix states it"
+ },
+ "S4_propagation": {
+  "phys_merge": "worst status over all copies of a phys_id",
+  "tracks": "a track with any unresolved conflict_pair point has status conflict",
+  "ope": "rows whose X or Z is an unresolved conflict_pair mode: identity ambiguous, publishable = false",
+  "unchanged_must_be_byte_identical": ["kappa threshold", "projected primary modes (Delta, vectors)", "tracks and blind names", "fits", "OPE numerical values"]
+ },
+ "dry_run_acceptance": {
+  "outputs": ["v0.3.5", "option_B (official)", "option_A (comparator)", "S1_prime (comparator)"],
+  "case_report": "24 same-copy dual passes, 1 cross-copy split, the 4 N12 cases: dropped directions, principal angles, S3 evidence, final class",
+  "scope_check": "sectors with all s^2 >= 1-g and no conflict: |w_D - baseline| <= 1e-12 and identical class; every other class change listed with its rule (S1/S2/S3)",
+  "unit_tests": ["(1,0) and (1,0.01) merge to one direction", "two orthogonal families: D unchanged", "d_P + d_D > n_s triggers a conflict", "d_i with a missing K edge gives no evidence in (b)"],
+  "sensitivity": "g = 0.85 and 0.95 move the S1 cut together with g; reported, not used to choose g",
+  "forbidden": "paper labels or agreement rates for choosing rules or options"
+ }
+}

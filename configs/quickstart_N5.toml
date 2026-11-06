@@ -1,0 +1,61 @@
+# Quick start: the complete production chain for N = 5 (about 3–5 minutes with 8 threads, < 2 GB memory).
+#   julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml
+# Same physics and settings as configs/examples/N05.toml; outputs go to results/quickstart/ under your data root.
+[run]
+N = 5
+g = 0.8642902899515241
+out = "results/quickstart/N5/run"
+
+[plan]
+sectors = "all"
+lmax = 4
+delta_max = 6.2
+half = true
+steps = ["coverage", "ope3", "parity", "parity_join", "fullq", "stageb", "rawtarget"]
+
+[spectrum]
+lmax = 3
+exchange = true
+tol = 1.0e-10
+parity = "both"
+nev = 30
+
+[coverage]
+delta_cut = 6.0
+kmax = 400
+
+[targets]
+initial_nev = 30
+max_nev = 4000
+guard = 1.0e-5
+
+[kk]
+cache = "results/quickstart/kk_cache"
+
+[threads]
+native = 8
+tile = 64
+
+[ope3]
+out = "results/quickstart/N5/ope3"
+int_ranks = [1, 2, 3, 4]
+half_lmax = 3
+image_bytes = 1.6e10
+
+[parity]
+out = "results/quickstart/N5/parity"
+
+[parity_join]
+python = "python3"               # "python" on Windows
+
+[fullq]
+out = "results/quickstart/N5/fullq"
+
+[stageb]
+sectors = ["half", "11"]
+
+[stageb.half]
+out = "results/quickstart/N5/stageb_half"
+
+[stageb.11]
+out = "results/quickstart/N5/stageb_11"

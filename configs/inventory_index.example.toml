@@ -1,0 +1,13 @@
+# Index of your output directories for tools/data_inventory.jl (copy and edit; paths relative to your data root).
+#   julia tools/data_inventory.jl configs/inventory_index.toml <data root>/inventory/DATA_INVENTORY <data root>
+# Any entry may be omitted.  The paths below are those that configs/examples/N05.toml writes.
+
+[[N]]
+N = 5
+jobs = ""                                   # free text copied to the table (e.g. your job ids)
+run = "results/main/N5"
+ope3 = "results/ope3/N5"
+parity = "results/parity/N5"
+fullq = "results/fullq/N5"
+stageb = ["results/stageb/half/N5", "results/stageb/11/N5"]
+rawtarget = ["results/stageb/half/N5/rawtarget", "results/stageb/11/N5/rawtarget"]

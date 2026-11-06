@@ -1,0 +1,8 @@
+[deps]
+FuzzifiED = "b45b6d2d-92f2-400f-a7df-d2d897927e5f"
+KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
+
+[compat]
+FuzzifiED = "=2.0.1"
+KrylovKit = "=0.10.4"
+julia = "1.11"

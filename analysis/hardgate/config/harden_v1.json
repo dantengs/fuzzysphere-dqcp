@@ -1,0 +1,79 @@
+{
+ "run_id": "harden_v1",
+ "frozen_before_running_on_data": "2026-10-25; rules written before harden.py was run on any size",
+ "baseline": {
+  "config": "<filled in by blindpd.formal: the formal config>",
+  "run": "<filled in by blindpd.formal: <out>/run>",
+  "code_manifest": "CODE_MANIFEST_v0.5.1.sha256",
+  "note": "blindpd.formal replaces this table; to run blindpd.harden alone, set config and run to an existing blindpd.run output"
+ },
+ "regression_gate": {
+  "description": "harden.py recomputes analyse_size; per-copy cls must equal the baseline exactly and weights within tol",
+  "weight_abs_tol": 1e-9,
+  "Delta_abs_tol": 1e-9
+ },
+ "T1_dual_pass": {
+  "gate_from_baseline": "raw_class_weight",
+  "pass_P": "guarded AND w_P >= gate",
+  "pass_D": "w_D >= gate",
+  "same_copy_both": "ambiguous_primary_descendant_overlap",
+  "different_copies_P_and_D": "ambiguous_cross_copy_split",
+  "stageB_vs_integer_P_vs_D": "ambiguous_cross_sector (diagnostic; integer label recorded, not overridden by priority)",
+  "mode_in_descendant_span": "projected primary mode v with ||Pi_D v||^2 >= gate",
+  "span_triage": {
+   "overcomplete": "dim primary subspace + effective dim of descendant span inside the (C2,X,P) sector > sector dimension",
+   "effective_descendant_dim_sv": 0.5,
+   "near_overlap": "largest cos^2 between primary subspace and descendant span >= gate, not overcomplete"
+  }
+ },
+ "T2_algebra": {
+  "identity": "sum_A ||P_A psi||^2 - ||K_A psi||^2 = 6 Delta (trace of [K_mu,P_mu] = 2D); A summed with (2lf+1)/(2L+1)",
+  "P_part_raw_states": "exact: full-space image norm (exported Gram) minus lowering and equal-energy parts",
+  "K_part_complete_if": "all required lf edges present and E_s < every target frontier - atol (= KK guard)",
+  "modes": "window part exact; outside-window part bounded by (sum_s |v_s| sqrt(full_s - ||M_s||^2))^2",
+  "relative_residual": "(comm - 6 Delta) / (6 Delta), only for Delta > 0.1",
+  "role": "informational only (no accepted tolerance has an independent basis); never changes revised_class",
+  "scope": "scalar contraction only; component-wise [K_mu,P_nu] and [D,K] operator tests are NOT done",
+  "energy_shift_check": "K-weighted mean of alpha(E_s-E_t) and P-window-weighted mean of alpha(E_t-E_s), expected 1"
+ },
+ "T3_window_shrink": {
+  "dDelta": [0.25, 0.5],
+  "rule": "every source and target window loses its top dDelta (Delta units); frontier -> min(frontier, new top); same thresholds and parameters",
+  "raw_level_stable": "same class in every variant in which the level is still present",
+  "mode_stable": "best |<v|v'>|^2 >= gate (raw_class_weight) and |dDelta| < 0.01 in every variant where its sector survives",
+  "claim_limit": "stability against truncation of the existing windows only; not convergence to the full space"
+ },
+ "T4_kappa": {
+  "bin_widths": [0.2, 0.25, 0.3],
+  "bin_offsets_fraction": [0.0, 0.3333333333333333, 0.6666666666666666],
+  "pools": [[6, 7, 8, 9, 10], [6, 7, 8, 9, 10, 11, 12]],
+  "absolute_K2_cutoffs_compared": [0.17, 0.25],
+  "local_gap_factor": 3.0,
+  "mode_robust_correspondence": "best |<v_mid|v_lo/hi>|^2 >= gate (vector overlap, not energy)",
+  "role": "baseline kappa threshold unchanged; variants reported only"
+ },
+ "T5_tracks": {
+  "status_priority": ["insufficient_points", "identity_ambiguous", "conflict", "near_short_candidate", "window_sensitive", "kappa_sensitive", "no_flag"],
+  "min_points": 3,
+  "no_trend_fits": true
+ },
+ "T6_near_short": {
+  "lambda": "(2 Delta0 + n - 3) n + L(L+1) - L0(L0+1)  [FFK 2602.04958 eq. 3.2]",
+  "levels_n": [1, 2, 3],
+  "match_Delta_tol": 0.25,
+  "almost_primary_lambda_max": 1.0,
+  "consistent_band": [0.5, 2.0],
+  "rule": "primary mode m with a lower primary p (same N, same C2, Delta_p > 0.1), parity P_m = P_p (-1)^(L_p+n+L_m), multiplicity(n,L_p,L_m)>0, |Delta_m - Delta_p - n| <= tol and lambda < 1 is a candidate; measured K2_m in [0.5,2] x lambda -> consistent_with_near_short_descendant; K2_m < 0.5 lambda -> candidate_rejected_K2_small",
+  "normalization_check": "measured <psi|K2|psi> of guarded descendant raw levels vs lambda(parent, level, L) (independent test of the generator normalisation)"
+ },
+ "T7_revised_class_priority": [
+  "unclassifiable_* (unchanged)",
+  "ambiguous_primary_descendant_overlap",
+  "ambiguous_cross_copy_split",
+  "ambiguous_cross_sector",
+  "primary -> primary_uncertain_near_short_descendant | primary_uncertain_window | primary_kappa_sensitive | primary",
+  "descendant -> descendant_uncertain_window | descendant",
+  "mixed / nonprimary (unchanged, window flag recorded)"
+ ],
+ "not_changed": "baseline outputs, kappa threshold, raw_class_weight, family rules, tracking, OPE values; stageB sectors are not hardened (only their cross-sector conflicts are read)"
+}

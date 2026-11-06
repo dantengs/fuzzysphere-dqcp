@@ -1,0 +1,32 @@
+# Template for bench/coverage_run.jl (__N__, __OUT__, __NEV__, __KKCACHE__ are filled by your job script):
+# full recomputation with coverage up to Delta_cut, all SO(5) channels
+# (every (sA,sB) pair, both exchange parities), L = 0..4, tuned coupling.
+[run]
+N = __N__
+g = "tuned"
+out = "__OUT__"
+[tune]
+start = 0.9
+bounds = [0.5, 1.5]
+maxpoints = 24
+[basis]
+segment_checkpoint = ""
+[spectrum]
+lmax = 4
+blocks = "all"
+nev = __NEV__
+exchange = true
+parity = "both"
+tol = 1e-10
+residency = "all"
+[threads]
+native = 8
+tile = 64
+[targets]
+initial_nev = __NEV__
+max_nev = 4000
+guard = 1e-5
+[kk]
+cache = "__KKCACHE__"
+[ope]
+half = true

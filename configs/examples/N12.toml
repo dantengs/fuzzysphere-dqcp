@@ -1,0 +1,90 @@
+# Reference plan for N = 12: the sectors, L ranges, windows and cuts of the original study, in the plan format.
+# All relative paths are under your data root (bin/tcc.jl --data=DIR, TCC_DATA, or user.toml).  g is the tuned
+# coupling of the original study (F(g) = 0, docs/en/METHODS.md section 4); retune with the tune stage if you change
+# the model.  Check the block dimensions (METHODS section 2.4) and your resources before running N >= 8.
+# Run:  julia --project=env --threads=T bin/tcc.jl configs/examples/N12.toml
+[run]
+N = 12
+g = 1.0092383457693275                       # tuned by F(g) = 0, docs/en/METHODS.md section 4
+out = "results/main/N12"
+
+[plan]
+sectors = [[0, 0], [0, 1], [0, 2]]
+lmax = 3                        # blocks L = 0..lmax; target windows to L = lmax+1
+delta_max = 6.2                  # target windows cover KK sources up to Delta = 6.2
+half = true
+steps = ["coverage", "ope3", "parity", "parity_join", "fullq", "stageb"]   # rawtarget omitted at this size
+
+[basis]
+segment_checkpoint = ""          # "" = build the basis in the run; or a segment_spaces.ckpt you built before
+
+[spectrum]
+lmax = 3                         # legacy physics key (part of the run identity)
+exchange = true
+tol = 1.0e-10
+parity = "both"
+nev = 24
+residency = "auto"               # pair above 16e9 bytes of segment basis (N12), else all
+
+[spectrum.block_nev]
+s0_s1_L0 = 44
+s0_s1_L1 = 44
+s0_s1_L2 = 44
+s0_s1_L3 = 44
+s0_s2_L0 = 32
+s0_s2_L1 = 32
+s0_s2_L2 = 32
+s0_s2_L3 = 32
+
+[coverage]
+delta_cut = 6.0
+kmax = 400
+
+[targets]
+initial_nev = 24
+max_nev = 400
+guard = 1.0e-5
+
+[kk]
+cache = "kk_cache"
+
+[threads]
+native = 8
+tile = 64
+
+[ope3]
+out = "results/ope3/N12"
+src_dmax = 5.0
+pair_dmax = 6.5
+int_ranks = [1, 2, 3, 4]
+half_lmax = 3
+half_nev = 24
+threshold = 0.25
+image_bytes = 2.0e11
+
+[parity]
+out = "results/parity/N12"
+targets = true
+
+[fullq]
+out = "results/fullq/N12"
+sectors = [[0, 1], [0, 2], [0, 0]]
+rank_max = 3
+
+[stageb]
+sectors = ["half"]
+max_nev = 384
+raw_delta_max = 6.8
+lmax = 1                         # raw windows L0-2, KK/OPE L0-1; lmax = 2 needs the complete L2 window (days, METHODS section 11)
+# certificate of v0.3.0 (no extra states); to use it instead of the v0.3.1 defaults:
+#   extra_states = 0
+#   complement_tol = 1.0e-10
+#   final_polish_trigger = 0.0
+
+[stageb.half]
+out = "results/stageb/half/N12"
+
+# Preliminary KK/OPE with a partial top window (a partial checkpoint of an unfinished L2 window) as KK target.
+# Run as a separate plan with step = "all" into its own output directory holding the L0/L1 windows:
+#   prelim_top_window = "results/stageb/half/N12_L2/windows/partial/L2_k081.ckpt"
+#   prelim_complement = true

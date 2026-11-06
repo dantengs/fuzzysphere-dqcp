@@ -1,0 +1,22 @@
+#!/bin/bash
+# One Tcc plan as a Slurm job.  Copy to cluster/<name>.sbatch (ignored by git), edit the #SBATCH lines, then
+#   sbatch cluster/<name>.sbatch configs/examples/N08.toml [step ...]
+# Paths: TCC_REPO = this repository on the cluster, TCC_DATA = your data root (outputs go there), JULIA = Julia 1.11.
+#SBATCH -J tcc
+#SBATCH -N 1
+#SBATCH -c 64
+#SBATCH --mem=240G
+#SBATCH -t 2-00:00:00
+#SBATCH -o tcc-%j.out
+##SBATCH -p <partition>
+##SBATCH -A <account>
+set -euo pipefail
+: "${TCC_REPO:?set TCC_REPO}" "${TCC_DATA:?set TCC_DATA}"
+JULIA=${JULIA:-julia}
+cd "$TCC_REPO"
+# commit recorded in every manifest (the code also reads it from git when available)
+export TCC_GIT_COMMIT=${TCC_GIT_COMMIT:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}
+# Tcc sets the BLAS and FuzzifiED thread counts itself ([threads] of the run file); do not pin Julia to one core
+# (for example with JULIA_EXCLUSIVE=1), which also pins the BLAS threads.
+/usr/bin/time -v "$JULIA" --startup-file=no --project=env --threads=${SLURM_CPUS_PER_TASK:-8} \
+    bin/tcc.jl "$@" --data="$TCC_DATA"

@@ -1,0 +1,20 @@
+# machine-specific settings (copy the *.example files)
+user.toml
+analysis/paths.local.json
+cluster/*.sbatch
+!cluster/*.sbatch.example
+# built by deps/setup_env.jl
+env/Manifest.toml
+deps/FuzzifiED.jl/
+# data and outputs: keep them under your data root, outside the repository
+data/
+results/
+runs/
+run/
+logs/
+*.ckpt/
+analysis/**/results/
+analysis/**/inputs/
+analysis/**/threshold_from_raw.json
+__pycache__/
+*.pyc

@@ -1,0 +1,247 @@
+--- a/src/so3lver/core/comp_operator.jl
++++ b/src/so3lver/core/comp_operator.jl
+@@ -47,14 +47,30 @@
+ * `cpd :: CoupleDecomps` is the list of coupling decompositions ; it must be the same one used to build `sgop`.
+ * `sgop :: Matrix{SegOperator}` is the matrix of segment operators. Facultative, if omitted, the segment operators will be automatically generated from [`BuildSegOperators`](@ref).
+ * `ltot :: Int64` is twice the total angular momentum ``2l_{\\text{tot}}`` carried by the operator. Facultative, ``0`` (a scalar) by default.
+-* `ident_seg :: Vector{Int64}`, `full_mat :: Bool`, and `num_th :: Int64` are forwarded to [`BuildSegOperators`](@ref) ; they are accepted only when `sgop` is omitted. 
++* `num_th :: Int64` bounds the spawned composite-assembly tasks; when `sgop` is omitted it is also forwarded to [`BuildSegOperators`](@ref). Nonpositive values use one assembly task when work is nonempty.
++* `ident_seg :: Vector{Int64}` and `full_mat :: Bool` are forwarded to [`BuildSegOperators`](@ref) only when `sgop` is omitted.
+ * `disp_std :: Bool`, whether or not the log shall be displayed. Facultative, `!SilentStd` by default. 
+ 
+ # Output
+ 
+ * `cpop :: CompOperator` is the resulting composite operator.
+ """
+-function BuildCompOperator(cpspd :: CompSpace{T}, cpspf :: CompSpace{T}, cpd :: CoupleDecomps, sgop :: Matrix{SegOperator}, ltot :: Int64 = 0 ; disp_std = !FuzzifiED.SilentStd) where T <: Union{Float64, ComplexF64}
++function _CompAssemblyForEach(f, nwork :: Int64, num_th :: Int64)
++    nworkers = min(max(1, num_th), nwork)
++    next_work = Threads.Atomic{Int64}(0)
++    @sync for _ = 1 : nworkers
++        Threads.@spawn begin
++            while true
++                iwork = Threads.atomic_add!(next_work, 1) + 1
++                iwork > nwork && break
++                f(iwork)
++            end
++        end
++    end
++    return nworkers
++end
++
++function BuildCompOperator(cpspd :: CompSpace{T}, cpspf :: CompSpace{T}, cpd :: CoupleDecomps, sgop :: Matrix{SegOperator}, ltot :: Int64 = 0 ; disp_std = !FuzzifiED.SilentStd, num_th :: Int64 = FuzzifiED.NumThreads) where T <: Union{Float64, ComplexF64}
+     nd = length(cpd)
+     ch = [ cpd[d].ch for d = 1 : nd ]
+     coeff = [ cpd[d].coeff for d = 1 : nd ]
+@@ -64,7 +80,7 @@
+     colptr[1, :] .= 1
+     rowid = [ Int64[] for d = 1 : nd ]
+     idel = [ Matrix{Int64}(undef, np, 0) for d = 1 : nd]
+-    Threads.@threads :greedy for d = 1 : nd 
++    connectivity_workers = _CompAssemblyForEach(nd, num_th) do d
+         index = 0
+         for jsec in axes(cpspd.idsec, 2)
+             idsecj = cpspd.idsec[:, jsec]
+@@ -85,7 +101,9 @@
+ 
+     mat9j = [ Vector{Matrix{Float64}}(undef, colptr[end, d] - 1) for d = 1 : nd ]
+     wkcost = [ Vector{Int64}(undef, colptr[end, d] - 1) for d = 1 : nd ]
+-    Threads.@threads :greedy for (jsec, d) in collect(Iterators.product(axes(cpspd.idsec, 2), 1 : nd))
++    sector_channel_pairs = collect(Iterators.product(axes(cpspd.idsec, 2), 1 : nd))
++    recoupling_workers = _CompAssemblyForEach(length(sector_channel_pairs), num_th) do ipair
++        jsec, d = sector_channel_pairs[ipair]
+         idsecj = cpspd.idsec[:, jsec]
+         dimj = [ _ChannelDims(cpspd, jsec, j) for j in eachindex(cpspd.chs[jsec]) ]
+         for e = colptr[jsec, d] : colptr[jsec + 1, d] - 1
+@@ -120,16 +138,18 @@
+ 
+     wklist = [ (jsec, d, e) for d = 1 : nd for jsec in axes(cpspd.idsec, 2) for e = colptr[jsec, d] : colptr[jsec + 1, d] - 1 ]
+     sort!(wklist ; by = wk -> wkcost[wk[2]][wk[3]], rev = true)
++    @debug "COMP_OPERATOR_ASSEMBLY_WORKERS" connectivity=connectivity_workers recoupling=recoupling_workers
+     disp_std && @info "FINISH GENERATING COMP OPERATOR"
+ 
+     return CompOperator{T}(cpspd, cpspf, nd, ltot, coeff, sgop, colptr, rowid, idel, mat9j, wklist)
+ end
+ 
+-BuildCompOperator(cpspd :: CompSpace{T}, cpd :: CoupleDecomps, sgop :: Matrix{SegOperator}, ltot :: Int64 = 0) where T <: Union{Float64, ComplexF64} = BuildCompOperator(cpspd, cpspd, cpd, sgop, ltot)
++BuildCompOperator(cpspd :: CompSpace{T}, cpd :: CoupleDecomps, sgop :: Matrix{SegOperator}, ltot :: Int64 = 0 ; num_th :: Int64 = FuzzifiED.NumThreads) where T <: Union{Float64, ComplexF64} = BuildCompOperator(cpspd, cpspd, cpd, sgop, ltot ; num_th)
+ 
+ function BuildCompOperator(cpspd :: CompSpace{T}, cpspf :: CompSpace{T}, cpd :: CoupleDecomps, ltot :: Int64 = 0 ; ident_seg :: Vector{Int64} = collect(1 : cpspd.np), full_mat :: Bool = false, num_th :: Int64 = FuzzifiED.NumThreads) where T <: Union{Float64, ComplexF64}
+-    sgop = BuildSegOperators(cpspd.sgsp, cpspf.sgsp, cpd ; full_mat, ident_seg, num_th)
+-    return BuildCompOperator(cpspd, cpspf, cpd, sgop, ltot)
++    bounded = max(1, num_th)
++    sgop = BuildSegOperators(cpspd.sgsp, cpspf.sgsp, cpd ; full_mat, ident_seg, num_th = bounded)
++    return BuildCompOperator(cpspd, cpspf, cpd, sgop, ltot ; num_th = bounded)
+ end
+ 
+ BuildCompOperator(cpspd :: CompSpace{T}, cpd :: CoupleDecomps, ltot :: Int64 = 0 ; ident_seg :: Vector{Int64} = collect(1 : cpspd.np), full_mat :: Bool = false, num_th :: Int64 = FuzzifiED.NumThreads) where T <: Union{Float64, ComplexF64} = BuildCompOperator(cpspd, cpspd, cpd, ltot ; full_mat, ident_seg, num_th)
+@@ -142,73 +162,96 @@
+ applies the composite operator `cpop` to a state `std` of the initial composite space and returns the resulting state of the final composite space or calculates its inner product between an initial and a final state. The action is evaluated block by block : for every decomposition channel and every pair of coupling channels it takes the Kronecker product of the corresponding per-part reduced matrix element blocks, weighted by the channel coefficient and the ``9j`` re-coupling factor. The number of threads used `num_th` is by default `NumThreads`.
+ """
+ function Base.:*(cpop :: CompOperator{T}, std :: Vector{T} ; num_th = FuzzifiED.NumThreads) where T <: Union{Float64, ComplexF64}
+-    th_lock = ReentrantLock()
+     stf = zeros(T, cpop.cpspf.dim)
+     np = cpop.cpspd.np
+ 
+     nwk = length(cpop.wklist)
++    nwk == 0 && return stf
++
++    # Keep the original cost order within each destination sector.
++    nsec = size(cpop.cpspf.idsec, 2)
++    incoming_ptr = Vector{Int64}(undef, nsec + 1)
++    incoming_ptr[1] = 1
++    incoming_count = zeros(Int64, nsec)
++    for (_, d, e) in cpop.wklist
++        incoming_count[cpop.rowid[d][e]] += 1
++    end
++    for isec = 1 : nsec
++        incoming_ptr[isec + 1] = incoming_ptr[isec] + incoming_count[isec]
++    end
++    incoming_wk = Vector{Int64}(undef, nwk)
++    next_incoming = copy(@view incoming_ptr[1 : nsec])
++    for iwk = 1 : nwk
++        _, d, e = cpop.wklist[iwk]
++        isec = cpop.rowid[d][e]
++        incoming_wk[next_incoming[isec]] = iwk
++        next_incoming[isec] += 1
++    end
++
++    # Each task owns one disjoint destination channel range.
++    active_channels = Tuple{Int64, Int64}[]
++    for isec = 1 : nsec
++        incoming_ptr[isec] == incoming_ptr[isec + 1] && continue
++        for ich in eachindex(cpop.cpspf.chs[isec])
++            cpop.cpspf.ptr_st[isec][ich] == cpop.cpspf.ptr_st[isec][ich + 1] && continue
++            push!(active_channels, (isec, ich))
++        end
++    end
++    isempty(active_channels) && return stf
+ 
+     maxblk = 1
+     for pts in cpop.cpspf.ptr_st, i in 1 : length(pts) - 1
+         maxblk = max(maxblk, pts[i + 1] - pts[i])
+     end
+-    nth = max(1, min(num_th, nwk))
+-
+-    next_wk = Threads.Atomic{Int64}(0)
++    nth = max(1, min(num_th, length(active_channels)))
++    next_channel = Threads.Atomic{Int64}(0)
+ 
+     nth_blas = BLAS.get_num_threads()
+     BLAS.set_num_threads(1)
+-    @sync for _ = 1 : nth
+-        Threads.@spawn begin
+-            stf1 = zeros(T, cpop.cpspf.dim)
+-            scratch = Vector{T}(undef, maxblk)
+-            idlj = Vector{Int64}(undef, np)
+-            idli = Vector{Int64}(undef, np)
+-            blocks = Vector{Matrix{T}}(undef, np)
+-            scr2 = T[]
+-            nwk_th = 0
+-            while true
+-                iwk = Threads.atomic_add!(next_wk, 1) + 1
+-                iwk > nwk && break
+-                nwk_th += 1
+-                jsec, d, e = cpop.wklist[iwk]
+-                idsecj = @view cpop.cpspd.idsec[:, jsec]
+-                coeff = cpop.coeff[d]
+-                idel_sg = @view cpop.idel[d][:, e]
+-                isec = cpop.rowid[d][e]
+-                idseci = @view cpop.cpspf.idsec[:, isec]
+-                mat9j_e = cpop.mat9j[d][e]
+-                for jch in eachindex(cpop.cpspd.chs[jsec])
+-                    jrng = cpop.cpspd.ptr_st[jsec][jch] : cpop.cpspd.ptr_st[jsec][jch + 1] - 1
++    try
++        @sync for _ = 1 : nth
++            Threads.@spawn begin
++                scratch = Vector{T}(undef, maxblk)
++                idlj = Vector{Int64}(undef, np)
++                idli = Vector{Int64}(undef, np)
++                blocks = Vector{Matrix{T}}(undef, np)
++                scr2 = T[]
++                while true
++                    itask = Threads.atomic_add!(next_channel, 1) + 1
++                    itask > length(active_channels) && break
++                    isec, ich = active_channels[itask]
++                    idseci = @view cpop.cpspf.idsec[:, isec]
++                    irng = cpop.cpspf.ptr_st[isec][ich] : cpop.cpspf.ptr_st[isec][ich + 1] - 1
+                     for p = 1 : np
+-                        lj = cpop.cpspd.chs[jsec][jch][1, p]
+-                        idlj[p] = cpop.cpspd.sgsp[p].l_lookup[idsecj[p]][lj]
++                        li = cpop.cpspf.chs[isec][ich][1, p]
++                        idli[p] = cpop.cpspf.sgsp[p].l_lookup[idseci[p]][li]
+                     end
+-                    for ich in eachindex(cpop.cpspf.chs[isec])
+-                        fac9j = mat9j_e[ich, jch]
+-                        abs(fac9j) < √eps(Float64) && continue
+-                        irng = cpop.cpspf.ptr_st[isec][ich] : cpop.cpspf.ptr_st[isec][ich + 1] - 1
+-                        for p = 1 : np
+-                            li = cpop.cpspf.chs[isec][ich][1, p]
+-                            idli[p] = cpop.cpspf.sgsp[p].l_lookup[idseci[p]][li]
++                    for iinc = incoming_ptr[isec] : incoming_ptr[isec + 1] - 1
++                        iwk = incoming_wk[iinc]
++                        jsec, d, e = cpop.wklist[iwk]
++                        idsecj = @view cpop.cpspd.idsec[:, jsec]
++                        coeff = cpop.coeff[d]
++                        idel_sg = @view cpop.idel[d][:, e]
++                        mat9j_e = cpop.mat9j[d][e]
++                        for jch in eachindex(cpop.cpspd.chs[jsec])
++                            fac9j = mat9j_e[ich, jch]
++                            abs(fac9j) < √eps(Float64) && continue
++                            jrng = cpop.cpspd.ptr_st[jsec][jch] : cpop.cpspd.ptr_st[jsec][jch + 1] - 1
++                            for p = 1 : np
++                                lj = cpop.cpspd.chs[jsec][jch][1, p]
++                                idlj[p] = cpop.cpspd.sgsp[p].l_lookup[idsecj[p]][lj]
++                                blocks[p] = cpop.sgop[p, d].elmat[idel_sg[p]][idli[p], idlj[p]]
++                            end
++                            _CompKronAccumulate!(stf, irng, scratch, blocks,
++                                                 std, jrng, scr2, coeff * fac9j)
+                         end
+-                        for p = 1 : np
+-                            blocks[p] = cpop.sgop[p, d].elmat[idel_sg[p]][idli[p], idlj[p]]
+-                        end
+-                        tmp = @view scratch[1 : length(irng)]
+-                        _KronMul!(tmp, blocks, (@view std[jrng]), scr2)
+-                        @views stf1[irng] .+= (coeff * fac9j) .* tmp
+                     end
+                 end
+             end
+-            if nwk_th > 0
+-                lock(th_lock) do
+-                    stf .+= stf1
+-                end
+-            end
+-        end
+-    end
+-    BLAS.set_num_threads(nth_blas)
++        end
++    finally
++        BLAS.set_num_threads(nth_blas)
++    end
+     return stf
+ end
+ Base.:*(stf :: LinearAlgebra.Adjoint{T, Vector{T}}, cpop :: CompOperator{T}, std :: Vector{T}) where T <: Union{Float64, ComplexF64} = stf * (cpop * std)
+@@ -277,6 +320,23 @@
+ end
+ 
+ 
++# Typed boundary for the repeated contraction/accumulation kernel. The outer
++# task still exclusively owns irng, and scratch/scr2 remain task-private.
++# Views are created and consumed within this concrete kernel; no broadcast
++# expression or view wrapper escapes the hot outer channel loop.
++function _CompKronAccumulate!(stf::Vector{T}, irng::UnitRange{Int64},
++                              scratch::Vector{T}, blocks::Vector{Matrix{T}},
++                              std::Vector{T}, jrng::UnitRange{Int64},
++                              scr2::Vector{T}, factor::T) where T
++    tmp = @view scratch[1:length(irng)]
++    _KronMul!(tmp, blocks, (@view std[jrng]), scr2)
++    offset = first(irng) - 1
++    @inbounds for i in eachindex(irng)
++        stf[offset+i] += factor * scratch[i]
++    end
++    return nothing
++end
++
+ function _KronMul!(y :: AbstractVector{T}, As, x :: AbstractVector{T}, scr :: Vector{T}) where T
+     N = length(As)
+     if N == 1

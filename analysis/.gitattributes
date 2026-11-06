@@ -1,0 +1,3 @@
+# Frozen analyses: code, rules and configs are verified by SHA-256 (freeze*.json, CODE_MANIFEST_*),
+# so git must store and check out their bytes unchanged (no line-ending conversion).
+* -text
