@@ -149,6 +149,6 @@ Results are reproducible to rounding, not bitwise across processes (threaded BLA
 eigenvector signs): compare magnitudes. When v0.3.0 was made, the whole chain was run against the earlier per-N code on
 N5 and N6; the differences were of the size of two runs of the same code (≤ 2e-11 absolute).
 
-## 6. Credits
-See [AUTHORS.md](AUTHORS.md). FuzzifiED is MIT-licensed (`deps/FuzzifiED-2.0.1/LICENSE`). Add a licence of your choice
-before you share the repository.
+## 6. Licence and credits
+MIT licence ([LICENSE](LICENSE)). Credits: [AUTHORS.md](AUTHORS.md). FuzzifiED is MIT-licensed as well; the one replaced
+file and its licence are in `deps/FuzzifiED-2.0.1/`.

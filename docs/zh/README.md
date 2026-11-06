@@ -141,5 +141,6 @@ julia --project=env --threads=64 bin/tcc.jl N08.toml --data=/scratch/me # 换一
 改变末位，从而改变 eigenvector 符号）：比较绝对值。制作 v0.3.0 时，在 N5、N6 上把完整链与早期按 N 的代码对照过，差异与同一代码
 两次运行之间的差异同量级（绝对值 ≤ 2e-11）。
 
-## 6. 署名
-见 [AUTHORS.md](../../AUTHORS.md)。FuzzifiED 为 MIT 许可（`deps/FuzzifiED-2.0.1/LICENSE`）。分享仓库前请自行添加许可证。
+## 6. 许可证与署名
+MIT 许可证（[LICENSE](../../LICENSE)）。署名见 [AUTHORS.md](../../AUTHORS.md)。FuzzifiED 同为 MIT 许可；替换的那一个文件及其许可证在
+`deps/FuzzifiED-2.0.1/`。
