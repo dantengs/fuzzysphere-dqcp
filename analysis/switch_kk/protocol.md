@@ -8,6 +8,8 @@
 
 历史逐态标签、投影、OPE 表和文献数值都不进入计算。
 
+只分析 s_A = 0 的块 (0,0)、(0,1)、(0,2)：在这些块里 SO(5) 表示由 C₂ 与 λ₂ = s_B 唯一确定（`spectrum.irrep`），s_A > 0 的块只是同一批 multiplet 的副本。导出中其余的块和边被忽略。相邻的 target sector 若为空（Tcc 不为它写 KK 边），导出在 `meta.json` 的 `empty_targets` 中列出（`export_kk.jl` v0.3.6），该方向不计入所需的出边集合。
+
 ## 降算符族
 
 生成元按能量变化 \(\omega=\Delta_t-\Delta_s\) 拆分。先令 \(|\omega|\le\mathrm{atol}\) 的等能元为零：这一带对应角动量 \(L^\mu\)，它与 \(D\) 对易，既不属于 \(K\) 也不属于 \(P\)。其余元素取 \(K_{ts}=f_w(\omega)M_{ts}\)、\(P_{ts}=(1-f_w(\omega))M_{ts}\)：
@@ -25,7 +27,7 @@
 
 对易子诊断 \(r=(\|P|s\rangle\|^2-\|K|s\rangle\|^2)/6-\Delta_s\) 中，\(\|P\|^2\) 由已保存非等能部分加上逐源态的完整像范数缺口组成，三种分类方法都精确。paper_window 报告窗口内一阶矩，以及“缺口全落在 frontier”给出的下界。
 
-Gram 的组装、跨宇称耦合检查、SO(5) Casimir 分块和 \((2L_t+1)/(2L_s+1)\) 多重度权重与 `../hardgate/blindpd/kk.py` 相同。跨 SO(5) Casimir 的生成元元素相对同 Casimir 最大元素须 \(\le10^{-6}\)（本征态残差经生成元系数放大后的数值噪声量级）。
+Gram 的组装、跨宇称耦合检查、SO(5) Casimir 分块和 \((2L_t+1)/(2L_s+1)\) 多重度权重与 `../hardgate/blindpd/kk.py` 相同。跨 SO(5) Casimir 的生成元元素相对整条边的最大元素须 \(\le10^{-6}\)（本征态残差经生成元系数放大后的数值噪声量级；与 Tcc 的 KK 门槛同一约定）。N12 原版相对同扇区同 Casimir 的最大元素；当选择定则使该边没有同 Casimir 的 target 时，这个分母为零或本身是噪声，小 N 时会误报，所以模板改用整条边。两种约定在 N12 上给出相同的分类，只有诊断列 `cross_c2_relative` 不同。
 
 ## 门槛
 

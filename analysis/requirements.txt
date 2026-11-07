@@ -1,0 +1,4 @@
+# Python >= 3.10 for analysis/ (tools/ope3_parity_join.py, used by the parity_join step, needs only the standard library).
+# Tested with Python 3.14, numpy 2.4, pandas 3.1.
+numpy>=1.26
+pandas>=2.1

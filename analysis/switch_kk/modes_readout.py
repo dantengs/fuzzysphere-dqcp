@@ -30,8 +30,9 @@ for r in modes[modes.method == "hard"].itertuples():
     a = np.array(list(v.values()))
     cos2 = {}
     for other in ("switch_0.25", "switch_0.50"):
-        w = vectors[(other, r.block, r.so5_c2, r.X, r.P, r.mode)]
-        cos2[other] = float((a @ np.array([w.get(k, 0.0) for k in v])) ** 2)
+        w = vectors.get((other, r.block, r.so5_c2, r.X, r.P, r.mode))
+        # (template) no such mode in the other method (its central subspace is smaller): no matching direction
+        cos2[other] = 0.0 if w is None else float((a @ np.array([w.get(k, 0.0) for k in v])) ** 2)
     parts = sorted(((int(k), c * c) for k, c in v.items()), key=lambda kv: -kv[1])
     dom = states.loc[(r.block, r.dominant_index)]
     rows.append(dict(

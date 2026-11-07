@@ -10,7 +10,7 @@
 
 using Serialization, SHA, Printf
 
-const EXPORTER_VERSION = "blind_pd_pipeline/export_kk v0.3.5"
+const EXPORTER_VERSION = "blind_pd_pipeline/export_kk v0.3.6"
 # v0.3.5: a (pair, L) whose KK sources are a saved target window (kkext, a run whose KK sources are saved target windows) has no blocks/<key>;
 # its entry is taken from the source window of its outgoing edges ("source_window" = "target", "x" = null, filled
 # from parity.csv by the reader).  Per-column eigenvector SHAs of both edge sides are exported for the gauge gate.
@@ -120,6 +120,21 @@ function main(run, out)
                 "energies" => ch.energies, "ckpt_sha" => ckpt_sha(p)))
         end
     end
+    # v0.3.6 (template): a neighbouring target window that is an empty sector has no KK edge (src/kkstage.jl: kk_edge!);
+    # list such targets so that an analysis can tell an empty neighbour from a missing export.  Only the targets of
+    # missing edges are opened, so no large window is loaded.
+    have = Set((Int(e["a"]), Int(e["b"]), Int(e["li"]), Int(e["lf"])) for e in edges)
+    empty_targets = String[]
+    for bk in keys(blocks)
+        mb = match(r"^s(\d)_s(\d)_L(\d+)$", bk); mb === nothing && continue
+        a, b, li = parse.(Int, mb.captures)
+        for lf in (li == 0 ? (1,) : (li - 1, li, li + 1))
+            (a, b, li, lf) in have && continue
+            tp = joinpath(run, "targets", "s$(a)_s$(b)_L$(lf).ckpt")
+            isdir(tp) && isempty(load(tp).energy) && push!(empty_targets, "s$(a)_s$(b)_L$(lf)")
+        end
+    end
+    meta["empty_targets"] = sort(unique(empty_targets))
     meta["blocks"] = blocks; meta["edges"] = edges; meta["production_projections"] = projs
     open(io -> jw(io, meta), joinpath(out, "meta.json"), "w")
     println("exported ", length(edges), " edges, ", length(blocks), " blocks, ", length(projs), " projection channels -> ", out)

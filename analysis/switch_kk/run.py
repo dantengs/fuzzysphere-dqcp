@@ -126,6 +126,11 @@ def load(source, threshold_path, lock):
     cuts = cut_grid(json.loads(threshold_path.read_text(encoding="utf-8")))
     meta = json.loads(paths[0].read_text(encoding="utf-8"))
     blocks, edges, cal = (meta[key] for key in ("blocks", "edges", "calibration"))
+    # (template) only the s_A = 0 blocks (0,0), (0,1), (0,2) are analysed: there the SO(5) irrep follows from C2 and
+    # lambda_2 = s_B (spectrum.irrep), and blocks with s_A > 0 hold further copies of the same multiplets.  An export
+    # of the original N12 layout has only these blocks, so nothing changes there.
+    blocks = {k: v for k, v in blocks.items() if k.startswith("s0_")}
+    edges = [e for e in edges if int(e["a"]) == 0]
     alpha, e0, coeff = cal["alpha"], cal["E0"], np.array(cal["coefficients"])
     if alpha <= 0 or not np.all(np.isfinite([alpha, e0, *coeff])):
         raise ValueError("Invalid energy or generator calibration")
@@ -187,9 +192,11 @@ def accumulate(outgoing, ell, c, ids, delta):
     for lf, edge in sorted(outgoing.items()):
         same = np.abs(np.asarray(edge["edge"]["target_C2"]) - c) < 1e-5
         columns = edge["matrix"][:, ids]
-        # relative to the largest same-Casimir element: eigensolver residuals (~1e-10) are amplified by
-        # the ~1e3 generator coefficients, so the absolute scale of this noise is ~1e-7
-        scale = max(float(np.max(np.abs(columns[same]), initial=0)), EPS)
+        # relative to the largest element of the whole edge (as the Tcc KK gate, METHODS section 7): eigensolver
+        # residuals (~1e-10) are amplified by the ~1e3 generator coefficients, so the absolute noise is ~1e-7.
+        # (Template change: the N12 version divided by the largest same-Casimir element of this sector, which is
+        # zero or itself noise when the selection rules leave no target of this Casimir, as happens at small N.)
+        scale = max(float(np.max(np.abs(edge["matrix"]), initial=0)), EPS)
         acc["cross_c2"] = max(acc["cross_c2"], float(np.max(np.abs(columns[~same]), initial=0)) / scale)
         m = columns[same]
         gap = edge["delta"][same, None] - delta[ids]
@@ -213,12 +220,21 @@ def fixed_sign(vector):
     return vector if vector[np.argmax(np.abs(vector))] >= 0 else -vector
 
 
-def analyse(blocks, indexed, parity, cuts, alpha, e0):
+def empty_targets_of(source):
+    """Neighbouring target windows that are empty sectors (export_kk.jl v0.3.6 `empty_targets`; absent in older exports)."""
+    _, paths = input_paths(source)
+    return frozenset(json.loads(paths[0].read_text(encoding="utf-8")).get("empty_targets", []))
+
+
+def analyse(blocks, indexed, parity, cuts, alpha, e0, empty_targets=frozenset()):
     states, modes, sectors = [], [], []
     for key, block in sorted(blocks.items()):
         ell = int(key.rsplit("L", 1)[1])
         outgoing = indexed[key]
-        if set(outgoing) != ({1} if ell == 0 else {ell - 1, ell, ell + 1}) or ell > 3:
+        a_b = key.rsplit("_L", 1)[0]
+        needed = {lf for lf in ({1} if ell == 0 else {ell - 1, ell, ell + 1})
+                  if f"{a_b}_L{lf}" not in empty_targets}            # empty neighbouring sectors have no edge
+        if set(outgoing) != needed:
             raise ValueError(f"Unexpected outgoing edge set for {key}")
         rows = sorted(parity[key], key=lambda row: int(row["index"]))
         energy = np.asarray(block["energy"])
@@ -347,7 +363,7 @@ def main():
         freeze(source, threshold, args.lock)
         return
     blocks, indexed, parity, cuts, manifest, alpha, e0 = load(source, threshold, args.lock)
-    states, modes, sectors = analyse(blocks, indexed, parity, cuts, alpha, e0)
+    states, modes, sectors = analyse(blocks, indexed, parity, cuts, alpha, e0, empty_targets_of(source))
     anchors = check_anchors(states)
     args.output.mkdir(exist_ok=False)
     for filename, rows in (("states.csv", states), ("modes.csv", modes), ("sectors.csv", sectors)):
