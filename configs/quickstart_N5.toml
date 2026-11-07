@@ -45,8 +45,8 @@ image_bytes = 1.6e10
 [parity]
 out = "results/quickstart/N5/parity"
 
-[parity_join]
-python = "python3"               # "python" on Windows
+[parity_join]                    # Python for tools/ope3_parity_join.py (standard library only)
+# python = "python3"             # default: TCC_PYTHON, else "python" on Windows, "python3" elsewhere
 
 [fullq]
 out = "results/quickstart/N5/fullq"

@@ -20,7 +20,8 @@
 #   targets_pairs  [targets_pairs] pairs = [[a,b],...]: target windows of these pairs only, outside the manifest
 #   ope3        [ope3] three-point insertions (src/ope3.jl)        out default <run.out>_ope3
 #   parity      [parity] physical parity (src/post.jl)             out default <run.out>_parity; targets, vacuum_raw
-#   parity_join phi x phi towers of ope3 with P (tools/ope3_parity_join.py; [parity_join] python = "python3")
+#   parity_join phi x phi towers of ope3 with P (tools/ope3_parity_join.py; [parity_join] python, else the
+#               environment variable TCC_PYTHON, else "python" on Windows and "python3" elsewhere)
 #   fullq       [fullq] full-Q integer-sector OPE (src/fullq.jl)   out default <run.out>_fullq
 #   stageb      [stageb] half / (1,1) sector (src/stageb.jl)       sectors = ["half"] (or ["half","11"]);
 #               per-sector tables [stageb.half], [stageb.11] override; out default <run.out>_stageb_<sector>
@@ -120,7 +121,8 @@ function run_steps(config; steps=nothing, force=String[])
             _write_plan(od, plan, s, o)
             run_parity(c, od; targets=get(o, "targets", true), vacuum_raw=get(o, "vacuum_raw", nothing))
         elseif s == "parity_join"
-            py = get(get(t, "parity_join", Dict()), "python", "python3")
+            # [parity_join] python, else TCC_PYTHON, else "python" on Windows and "python3" elsewhere
+            py = get(get(t, "parity_join", Dict()), "python", get(ENV, "TCC_PYTHON", Sys.iswindows() ? "python" : "python3"))
             run(`$py $(joinpath(dirname(@__DIR__), "tools", "ope3_parity_join.py")) $(_step_out(t, "ope3")) $(_step_out(t, "parity"))`)
         elseif s == "fullq"
             o = Dict{String,Any}(get(t, "fullq", Dict())); o["out"] = _step_out(t, "fullq")
