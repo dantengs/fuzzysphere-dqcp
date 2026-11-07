@@ -21,7 +21,7 @@ columns. Gates in the code stop a run whose residuals or windows are not good en
 | 4 | `julia --project=env --threads=8 bin/tcc.jl configs/examples/N06.toml coverage parity` | 2 min |
 | 5 | `python analysis/tools/demo_small_n.py <data root> --size 5 --pool 6` | 15 s |
 
-Disk: about 110 MB (plus about 150 MB of Julia packages) for all outputs. Memory: below 2 GB for these sizes.
+Disk: about 110 MB for all outputs, plus about 150 MB of Julia packages. Memory: below 2 GB for these sizes.
 
 ---
 
@@ -140,7 +140,8 @@ julia --project=env --threads=8 bin/tcc.jl configs/examples/N06.toml coverage pa
 This runs only the steps `coverage` and `parity` of the reference plan `configs/examples/N06.toml` (giving steps on the
 command line replaces the plan's step list) and writes `<data root>/results/main/N6` and `<data root>/results/parity/N6`.
 Its only use here is as the pool of the κ threshold in step 5: the threshold for an analysed size must come from other
-sizes. In the run documented here the N6 pool alone gives κ_c = 0.0421697, practically the value 0.04217 that the pre-registered N6–10 pool of the original study gave. To run the whole N = 6 plan, omit the step names.
+sizes. In the run documented here the N6 pool alone gives κ_c = 0.0421697: the same valley bin, hence the same value (the
+threshold is a bin centre), as the pre-registered N6–10 pool of the original study (0.04217). To run the whole N = 6 plan, omit the step names.
 
 ## 5. Primary/descendant analysis of N = 5 (rule C)
 

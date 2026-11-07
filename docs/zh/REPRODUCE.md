@@ -19,7 +19,7 @@ gate 会让残差或窗口不合格的 run 停下来，不会放宽任何门槛�
 | 4 | `julia --project=env --threads=8 bin/tcc.jl configs/examples/N06.toml coverage parity` | 2 分钟 |
 | 5 | `python analysis/tools/demo_small_n.py <数据根目录> --size 5 --pool 6` | 15 秒 |
 
-磁盘：全部输出约 110 MB（另有约 150 MB 的 Julia 包）。内存：这些尺寸都低于 2 GB。
+磁盘：全部输出约 110 MB，另有约 150 MB 的 Julia 包。内存：这些尺寸都低于 2 GB。
 
 ---
 
@@ -130,7 +130,8 @@ julia --project=env --threads=8 bin/tcc.jl configs/examples/N06.toml coverage pa
 
 只运行参考 plan `configs/examples/N06.toml` 中的 `coverage` 与 `parity` 两个 step（命令行给出的 step 会替换 plan 的 step 列表），
 输出 `<数据根目录>/results/main/N6` 与 `<数据根目录>/results/parity/N6`。它在这里只作第 5 步 κ 门槛的 pool：被分析尺寸的门槛必须来自
-其他尺寸。本次记录的运行中，仅用 N6 的 pool 就得到 κ_c = 0.0421697，与原始研究中预登记的 N6–10 pool 给出的 0.04217 几乎相同。 要跑完整的 N = 6 plan，去掉命令中的 step 名即可。
+其他尺寸。本次记录的运行中，仅用 N6 的 pool 就得到 κ_c = 0.0421697：与原始研究中预登记的 N6–10 pool 落在同一个谷值 bin，因而数值相同
+（门槛取 bin 中心，0.04217）。 要跑完整的 N = 6 plan，去掉命令中的 step 名即可。
 
 ## 5. N = 5 的 primary/descendant 分析（规则 C）
 
