@@ -6,7 +6,7 @@ a template: it holds code and documentation, the user's data live under the user
 Humans: see `docs/en/AI_GUIDE.md` (中文 `docs/zh/AI_GUIDE.md`).
 
 ## Read first
-1. `README.md` — code map, the plan file, steps, tests.
+1. `README.md` (introduction), `docs/en/GUIDE.md` — code map, the plan file, steps, tests; `docs/en/REPRODUCE.md` — the small-N reproduction and its reference numbers.
 2. `docs/en/METHODS.md` — every formula, threshold, seed and parameter, with the file that sets it.
 3. `docs/en/DATA_LAYOUT.md` — the data root, where outputs go, the inventory.
 4. `deps/README.md` — the environment (FuzzifiED 2.0.1 with one replaced file).
@@ -17,9 +17,12 @@ Chinese versions are in `docs/zh/`; answer in the language the user writes in.
 cp user.example.toml user.toml                                          # once; set [paths] data_root
 julia deps/setup_env.jl                                                 # once
 julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml   # full chain, N5, a few minutes
+python tools/check_quickstart.py <data root>/results/quickstart/N5      # PASS/FAIL against the reference values
 julia --project=env --threads=8 test/regress.jl 5 <data root>/tests/regress          # core regression (N = 4, 5, 6)
 julia --project=env --threads=8 test/t15_stageb_restart.jl 5 <data root>/tests/t15   # Stage B restart
 ```
+The whole small-N reproduction, including the N6 pool and the rule C analysis of N5
+(`analysis/tools/demo_small_n.py`), is `docs/en/REPRODUCE.md`.
 Start with N = 4 or 5 (the N5 full chain takes about 3 minutes with 8 threads on a desktop). Each further N multiplies the
 largest block dimension by about 8 (METHODS §2.4: N7 4 280, N9 2.5×10⁵, N11 1.8×10⁷); N ≥ 10 needs a cluster node and
 N12 needs hundreds of GB and days. Before starting N ≥ 8, tell the user the block dimensions and ask.

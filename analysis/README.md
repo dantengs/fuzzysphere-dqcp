@@ -1,13 +1,13 @@
 # analysis/ — primary/descendant analyses (Python)
 
 Rules, inputs and limits: [docs/en/ANALYSIS.md](../docs/en/ANALYSIS.md) (中文 [docs/zh/ANALYSIS.md](../docs/zh/ANALYSIS.md)).
-Python ≥ 3.10 with numpy, pandas, scipy. Run with `python -X utf8 -B` (UTF-8 I/O, no `__pycache__` next to frozen code).
+Python ≥ 3.10 with numpy and pandas (`pip install -r analysis/requirements.txt`). Run with `python -X utf8 -B` (UTF-8 I/O, no `__pycache__` next to frozen code).
 
 | Directory | Rule | Entry points |
 |---|---|---|
 | `hardgate/` | A: hard gate, all sizes together (blindpd 0.5.1) | `python -m blindpd.formal CONFIG OUT`, `tools/kappa_threshold.py`, `cluster/export_*.jl`, `tests/` |
 | `switch_kk/` | C: bounded switch, one size; `family/` and `family/coherent/` checks | `run.py`, `spectrum.py`, `modes_readout.py`, `charge_fit.py`, `family/family.py`, `family/readout.py`, `family/coherent/coherent.py`, `family/coherent/readout.py` |
-| `tools/` | `localize.py` (fill `${NAME}` roots of a template config), `manifest.py` (write/check SHA-256 manifests) | |
+| `tools/` | `localize.py` (fill `${NAME}` roots of a template config), `manifest.py` (write/check SHA-256 manifests), `demo_small_n.py` (small-N demo of rule C, [REPRODUCE.md](../docs/en/REPRODUCE.md) §5) | |
 
 ```bash
 # your paths (ignored by git)

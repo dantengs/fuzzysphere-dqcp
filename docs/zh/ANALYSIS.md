@@ -40,6 +40,9 @@ window 外的 target 都有 ω > w、f = 0。线性权重没有这种精确性�
 
 ## 3. 流程
 
+规则 C 的完整小 N 运行（分析 N5，N6 作 κ pool）只需一条命令 `analysis/tools/demo_small_n.py`，见 [REPRODUCE.md](REPRODUCE.md) §5。
+它执行的步骤如下：
+
 1. **规则 A。** 把 `analysis/paths.example.json` 复制为 `analysis/paths.local.json` 并填入你的根目录；用
    `analysis/tools/localize.py hardgate/config/formal.template.json paths.local.json <base>/config/formal.json` 填好模板；按你算过的
    尺寸设置 `sizes`、`main_fit_sizes`、`window_fit_sizes` 和 `stageB` 的尺寸；在 `analysis/hardgate` 下运行

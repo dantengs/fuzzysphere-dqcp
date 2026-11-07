@@ -43,6 +43,9 @@ The exporters only read the run directories. Keep the exports under your data ro
 
 ## 3. Workflow
 
+A complete small-N run of rule C (N5 analysed, N6 as the κ pool) is one command, `analysis/tools/demo_small_n.py`;
+see [REPRODUCE.md](REPRODUCE.md) §5. The steps it performs are:
+
 1. **Rule A.** Copy `analysis/paths.example.json` to `analysis/paths.local.json` and set your roots; fill the template
    with `analysis/tools/localize.py hardgate/config/formal.template.json paths.local.json <base>/config/formal.json`; set
    `sizes`, `main_fit_sizes`, `window_fit_sizes` and the `stageB` sizes to what you computed; run

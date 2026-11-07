@@ -1,154 +1,145 @@
-# Fuzzy-sphere SO(5) DQCP template (Tcc v0.3.1)
+# fuzzysphere-dqcp-template
 
-中文：[docs/zh/README.md](docs/zh/README.md) · Methods: [docs/en/METHODS.md](docs/en/METHODS.md) · Your data and paths:
-[docs/en/DATA_LAYOUT.md](docs/en/DATA_LAYOUT.md) · Primary/descendant analyses: [docs/en/ANALYSIS.md](docs/en/ANALYSIS.md) ·
-Working with an AI agent: [docs/en/AI_GUIDE.md](docs/en/AI_GUIDE.md)
+**English** · [中文](#中文简介)
 
-A template for computing the spectrum, primary candidates (KK projection), OPE coefficients and parities of the SO(5)
-deconfined critical point model on the fuzzy sphere, for any number of orbitals N, and for classifying the states into
-primaries and descendants afterwards. **There is one code path for all N.** The only N-dependent branch of the physics
-is the sign of the C₂ cross-density term for odd and even N (`src/so5_c2_density_phase.jl`). Choices that change only
-speed or memory are made from the size of the problem (`src/resources.jl`, METHODS §2.5), never from N.
+A complete, reusable computation template for the **SO(5) deconfined quantum critical point (DQCP) model on the fuzzy
+sphere**. For any number of orbitals N it computes the finite-size spectrum, the primary candidates by KK projection,
+OPE coefficients and physical parities (Julia, code name *Tcc*), and then classifies the states into primaries and
+descendants (Python, `analysis/`). Everything needed to rerun the small-N calculations from scratch is in this
+repository; your own data stay in a directory you choose.
 
-The repository holds code, documentation and reference plans only. **Your data and paths stay yours:** every output goes
-under a data root that you choose, and machine-specific settings live in files that git ignores (`user.toml`,
-`analysis/paths.local.json`, `cluster/*.sbatch`).
+- **One code path for every N.** The only N-dependent branch of the physics is the odd/even-N sign of the C₂
+  cross-density term. Choices that affect only speed or memory are made from the problem size, never from N.
+- **One plan file per calculation.** Sectors, spins, energy windows and post-processing steps are keys of a TOML file;
+  every step resumes from checkpoints that are bound to their physical inputs.
+- **Hard gates.** Residuals, Casimir purity, window completeness and independent checks stop a run instead of being
+  relaxed.
+- **Your data, your paths.** All outputs go under a data root that you set (`--data`, `TCC_DATA` or `user.toml`); the
+  tracked files contain no machine paths or accounts.
+- **Bilingual documentation** (English and Chinese) of every formula, threshold and parameter.
 
-## Getting started
+## Requirements
+
+| | |
+|---|---|
+| Julia | 1.11 (tested 1.11.7; e.g. `juliaup add 1.11`) |
+| Python | ≥ 3.10 with numpy and pandas (`pip install -r analysis/requirements.txt`) for the analyses and one join step |
+| Machine | small N: 8 threads, 4 GB memory, about 300 MB of disk (outputs and Julia packages); internet access once, to install the Julia packages |
+| OS | the reproduction below was checked on Windows 11; earlier versions of this code ran the production calculations on Linux clusters (macOS untested) |
+
+## Quick start
 
 ```bash
-cp user.example.toml user.toml                 # set [paths] data_root (default: ./data, ignored by git)
-julia deps/setup_env.jl                        # once: builds env/ (Julia 1.11; deps/README.md)
+git clone https://github.com/dantengs/fuzzysphere-dqcp-template.git && cd fuzzysphere-dqcp-template
+cp user.example.toml user.toml      # set [paths] data_root: where all outputs go (default ./data, ignored by git)
+julia deps/setup_env.jl             # once: installs and checks the Julia environment (about 2 minutes)
 julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml
+python tools/check_quickstart.py data/results/quickstart/N5   # use your data_root; prints PASS/FAIL per check
 ```
 
-The last command runs the complete chain for N = 5 in a few minutes (< 2 GB) and writes to
-`<data root>/results/quickstart/N5/`. The data root is, in this order: `--data=DIR`, the environment variable `TCC_DATA`,
-`[paths] data_root` of `user.toml`, the current directory. On a Slurm cluster copy `cluster/tcc.sbatch.example`.
-To learn, run and check the code with an AI coding agent (Claude Code, Codex, …), follow
-[docs/en/AI_GUIDE.md](docs/en/AI_GUIDE.md); the agent's own instructions are in [AGENTS.md](AGENTS.md).
+The fourth command runs the whole chain for N = 5 (spectrum, KK projection, OPE, three-point insertions, parity,
+full-Q OPE, the (½,½) and (1,1) sectors) in about 2.5 minutes on 8 threads.
+
+## Reproducing the small-N results
+
+[docs/en/REPRODUCE.md](docs/en/REPRODUCE.md) walks through the whole reproduction with the expected numbers:
+
+| Step | What it reproduces | Time (8 threads) |
+|---|---|---|
+| 1. Environment | FuzzifiED 2.0.1 with its one replaced file, KrylovKit 0.10.4, checked file by file | 1.5 min |
+| 2. N = 5 full chain + `check_quickstart.py` | tuned coupling, spectrum, KK candidates, OPE, parity, Stage B | 2.5 min |
+| 3. Tests | core regression, Stage B restart, analysis unit tests | 5 min |
+| 4. N = 6 main chain + parity | the κ-threshold pool for step 5 | 2 min |
+| 5. Primary/descendant analysis of N = 5 | KK export, κ threshold, rule C, family check | 15 s |
+
+Larger N use the same commands with the reference plans `configs/examples/N07.toml … N12.toml`; N ≥ 10 needs a
+cluster node (METHODS §2.4 lists the block dimensions).
+
+## Documentation
+
+| Document | Content |
+|---|---|
+| [REPRODUCE](docs/en/REPRODUCE.md) | step-by-step small-N reproduction and reference numbers |
+| [GUIDE](docs/en/GUIDE.md) | code map, plan files, steps, resource switches, tests |
+| [METHODS](docs/en/METHODS.md) | model, algorithms, every threshold, seed and parameter, limitations |
+| [DATA_LAYOUT](docs/en/DATA_LAYOUT.md) | data root, directory layout, run records, inventory, coupling tuning, cluster jobs |
+| [ANALYSIS](docs/en/ANALYSIS.md) | primary/descendant rules A and C, inputs, freezing, blind analysis |
+| [AI_GUIDE](docs/en/AI_GUIDE.md) | using and checking the code with an AI coding agent ([AGENTS.md](AGENTS.md) is the agent's own instruction file) |
+| [deps/README](deps/README.md) | the Julia environment |
+
+Each has a Chinese version under `docs/zh/`.
+
+## Licence and credits
+
+MIT licence ([LICENSE](LICENSE)); credits in [AUTHORS.md](AUTHORS.md). FuzzifiED is MIT-licensed as well; the one
+replaced file and its licence are in `deps/FuzzifiED-2.0.1/`. If you use this template, please also cite FuzzifiED and
+the fuzzy-sphere SO(5) DQCP literature on which the model and the tuning criterion are based (for example
+arXiv:2306.16435).
 
 ---
 
-## 1. Code map
+## 中文简介
 
-| Path | Content |
+**fuzzy sphere 上 SO(5) deconfined quantum critical point（DQCP）模型**的完整、可复用计算模板。对任意 orbital 数 N，计算
+有限尺寸 spectrum、KK projection 得到的 primary candidate、OPE 系数和物理 parity（Julia，代码名 *Tcc*），再把各态分为
+primary 与 descendant（Python，`analysis/`）。从零重跑小 N 计算所需的一切都在本仓库中；你自己的数据放在你选定的目录里。
+
+- **所有 N 用同一条代码路径。** 物理上唯一与 N 有关的分支是奇偶 N 下 C₂ cross-density 项的符号；只影响速度或内存的选择按问题规模决定，从不按 N。
+- **一次计算一个 plan 文件。** sector、spin、能量窗口和后处理步骤都是 TOML 文件的键；每个 step 都从绑定物理输入的 checkpoint 续算。
+- **硬门槛。** 残差、Casimir 纯度、窗口完整性和独立检查不通过时 run 直接停止，不会放宽。
+- **数据和路径归你自己。** 所有输出写到你设定的数据根目录（`--data`、`TCC_DATA` 或 `user.toml`）；被跟踪的文件中没有任何机器路径或账号。
+- **中英双语文档**，覆盖每个公式、门槛和参数。
+
+### 环境要求
+
+| | |
 |---|---|
-| `src/model.jl`, `ph.jl`, `seglib.jl`, `exchange.jl` | model, segment spaces (direct / particle–hole half build), segment operator library, segment exchange X |
-| `src/resources.jl` | size-based defaults of `ph_half` and `residency` |
-| `src/runner.jl`, `matvec.jl` | spectrum of (s_A, s_B, L) blocks, residency modes, H action kernels |
-| `src/targets.jl`, `edges.jl`, `kkstage.jl`, `ZhouGenerator.jl`, `kk/KKProjection.jl` | KK target windows, edges, vacuum fit, K² classification |
-| `src/tuning.jl` | coupling tuning F(g) = 0 |
-| `src/ope.jl`, `ope3.jl` | pipeline OPE; three-point insertions and extended OPE |
-| `src/parity.jl` | physical parity |
-| `src/stageb.jl` | Stage B — (½,½) and (1,1) sectors to the raw Δ cut, KK, full-Q OPE, raw targets; window certificate, partial checkpoints, preliminary top window |
-| `src/fullq.jl` | full-Q OPE of the integer sectors |
-| `src/post.jl` | coverage, per-pair targets, ope3 and parity drivers |
-| `src/plan.jl` | the plan (`[plan]`) and the step runner |
-| `src/pipeline.jl` | pipeline stages, manifest, resumption, provenance |
-| `bin/tcc.jl` | the single entry point (data root, steps) |
-| `bench/*_run.jl` | command-line forms of single steps |
-| `tools/ope3_parity_join.py` | parities of the φ×φ towers |
-| `tools/data_inventory.jl` | inventory of your computed sectors and data from the run records |
-| `configs/quickstart_N5.toml`, `example_N6.toml` | small runs |
-| `configs/examples/N05.toml … N12.toml` | reference plans: what the original study computed for each N |
-| `cluster/tcc.sbatch.example` | Slurm job for one plan |
-| `test/` | tests (§5) |
-| `analysis/` | primary/descendant analyses of the KK output (Python), one directory per rule: `hardgate/` (rule A, all N together) and `switch_kk/` (rule C, one N, with family checks); [docs/en/ANALYSIS.md](docs/en/ANALYSIS.md) |
-| `deps/` | environment builder and the one replaced FuzzifiED file |
+| Julia | 1.11（已用 1.11.7 测试；例如 `juliaup add 1.11`） |
+| Python | ≥ 3.10，需 numpy、pandas（`pip install -r analysis/requirements.txt`），用于分析和一个 join 步骤 |
+| 机器 | 小 N：8 线程、4 GB 内存、约 300 MB 磁盘（输出与 Julia 包）；首次安装 Julia 包需要联网 |
+| 系统 | 下面的复现在 Windows 11 上核对过；本代码的早期版本在 Linux 集群上运行过生产计算（macOS 未测试） |
 
-## 2. One file per calculation: the plan
-
-```toml
-[run]
-N = 8
-g = 0.8903705662882018
-out = "results/main/N8"          # relative: under your data root
-
-[plan]
-sectors = "all"            # or [[0,0],[0,1],[0,2]]: integer (sA,sB) pairs
-lmax = 4                   # blocks L = 0..lmax (KK sources); KK target windows to L = lmax+1
-delta_max = 6.2            # target windows complete up to the KK sources with Delta <= 6.2
-half = true                # (1/2,1/2) sector in the pipeline OPE
-steps = ["coverage", "ope3", "parity", "parity_join", "fullq", "stageb", "rawtarget"]
-
-[spectrum]                 # windows (number of states per block / X sector)
-nev = 80
-[coverage]                 # grow windows until every block reaches Delta >= 6.0 (or is complete)
-delta_cut = 6.0
-kmax = 400
-[targets]
-initial_nev = 80
-max_nev = 4000
-[ope3]                     # see METHODS section 9
-int_ranks = [1, 2, 3, 4]
-half_lmax = 3
-[fullq]                    # default: every pair of the run; rank_max = 4
-[stageb]                   # sectors "half" = (1/2,1/2), "11" = (1,1)
-sectors = ["half"]
-lmax = 4                   # KK sources and OPE spins 0..4, raw windows 0..5
-raw_delta_max = 6.8
-```
+### 快速上手
 
 ```bash
-julia --project=env --threads=64 bin/tcc.jl N08.toml                    # all plan steps
-julia --project=env --threads=64 bin/tcc.jl N08.toml stageb             # one step
-julia --project=env --threads=64 bin/tcc.jl N08.toml --data=/scratch/me # another data root
+git clone https://github.com/dantengs/fuzzysphere-dqcp-template.git && cd fuzzysphere-dqcp-template
+cp user.example.toml user.toml      # 设置 [paths] data_root：所有输出写到这里（默认 ./data，已被 git 忽略）
+julia deps/setup_env.jl             # 一次：安装并核对 Julia 环境（约 2 分钟）
+julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml
+python tools/check_quickstart.py data/results/quickstart/N5   # 换成你的 data_root；逐项打印 PASS/FAIL
 ```
 
-* The plan expands into the pipeline keys (`spectrum.blocks` = sectors × L0..lmax in lexicographic order,
-  `targets.source_delta_max`, `ope.half`); giving the same key twice with different values is an error.
-* **Steps**: `basis tune spectrum targets kk ope summary` (pipeline stages), `coverage`, `targets_pairs`
-  (`[targets_pairs] pairs = [[a,b],…]`: target windows of some pairs, for several nodes in parallel), `ope3`, `parity`,
-  `parity_join`, `fullq`, `stageb`, `rawtarget`. Output directories default to `<run.out>_<step>`
-  (`<run.out>_stageb_<sector>`); `out = …` in a step's table overrides.
-* Every step resumes from its checkpoints; every checkpoint is bound to its physical inputs (N, g, basis SHA, windows), so
-  a restart never mixes data of different inputs. The pipeline refuses a run directory with other physics keys.
-* **Record**: the pipeline stores the plan in `manifest.toml`; every other step writes `plan.toml` (plan, step options,
-  code version and commit) into its output directory. `tools/data_inventory.jl` builds your data table from these records.
+第四条命令用 8 线程约 2.5 分钟跑完 N = 5 的完整链（spectrum、KK projection、OPE、三点 insertion、parity、full-Q OPE、
+(½,½) 与 (1,1) sector）。
 
-Variants that are only keys of the plan:
+### 复现小 N 结果
 
-| Calculation | Plan |
+[docs/zh/REPRODUCE.md](docs/zh/REPRODUCE.md) 逐步给出完整复现流程和预期数值：
+
+| 步骤 | 复现内容 | 用时（8 线程） |
+|---|---|---|
+| 1. 环境 | FuzzifiED 2.0.1（替换一个文件）、KrylovKit 0.10.4，逐文件核对 | 1.5 分钟 |
+| 2. N = 5 完整链 + `check_quickstart.py` | tuning 后的 coupling、spectrum、KK candidate、OPE、parity、Stage B | 2.5 分钟 |
+| 3. 测试 | 核心回归、Stage B 重启、分析单元测试 | 5 分钟 |
+| 4. N = 6 主链 + parity | 第 5 步 κ 门槛所用的 pool | 2 分钟 |
+| 5. N = 5 的 primary/descendant 分析 | KK 导出、κ 门槛、规则 C、家族检验 | 15 秒 |
+
+更大的 N 用同样的命令和参考 plan `configs/examples/N07.toml … N12.toml`；N ≥ 10 需要集群节点（block 维数见 METHODS §2.4）。
+
+### 文档
+
+| 文档 | 内容 |
 |---|---|
-| half and (1,1) sectors, spins 0–4 | `[stageb] sectors = ["half", "11"]`, `lmax = 4` |
-| half sector, spins 0–3 | `[stageb] lmax = 3` |
-| largest N: parallel window jobs | `[stageb] lmax = 1`, `step = "windows"`, `windows = [0, 1]` in one job, `[2]` in another, then `step = "all"` |
-| stop a long window job cleanly, resume later | `[stageb] partial_checkpoints = true` (default), `stop_after_k = k` with `step = "windows"` |
-| cheap window certificate | `[stageb] extra_states = 4`, `complement_tol = 1e-6`, `final_polish_trigger = 1e-9` (defaults); `0, 1e-10, 0` = the v0.3.0 certificate |
-| preliminary KK/OPE from a partial top window | `[stageb] prelim_top_window = "<out>/windows/partial/L2_k081.ckpt"`, `prelim_complement = true` |
-| OPE onto the full raw windows | step `rawtarget` (or `[stageb] rawtarget = true`) |
-| full-Q OPE of selected sectors | step `fullq`, `[fullq] sectors = [[0,1],[0,2],[0,0]]`, `rank_max = 3` |
-| target windows per pair on several nodes | step `targets_pairs` |
-| only some sectors / L / pairs in KK | `plan.sectors`, `kk.pairs`, `kk.lmax` |
+| [REPRODUCE](docs/zh/REPRODUCE.md) | 逐步的小 N 复现与参考数值 |
+| [GUIDE](docs/zh/GUIDE.md) | 代码结构、plan 文件、step、资源开关、测试 |
+| [METHODS](docs/zh/METHODS.md) | 模型、算法、全部门槛、种子与参数、限制 |
+| [DATA_LAYOUT](docs/zh/DATA_LAYOUT.md) | 数据根目录、目录布局、run 记录、数据清单、coupling tuning、集群作业 |
+| [ANALYSIS](docs/zh/ANALYSIS.md) | primary/descendant 规则 A 与 C、输入、冻结、盲分析 |
+| [AI_GUIDE](docs/zh/AI_GUIDE.md) | 借助 AI coding agent 使用和检查代码（[AGENTS.md](AGENTS.md) 是 agent 自己的说明文件） |
+| [deps/README](deps/README.md) | Julia 环境 |
 
-## 3. Reference plans
-`configs/examples/N05.toml … N12.toml` restate what the original study computed for each N (sectors, L, windows, Δ cuts,
-post steps, tuned g). Use them as starting points; before N ≥ 8 check the block dimensions (METHODS §2.4) — N10 and up
-need a cluster node, N12 hundreds of GB and days.
+### 许可证与署名
 
-## 4. Resource switches
-See METHODS §2.5: `basis.ph_half` (largest segment sector ≥ 2000 → PH half build), `spectrum.residency` (segment basis
-> 16e9 bytes → `pair`), `threads.native_dim_max` (block dimension 2×10⁷), Stage B memory limit (85 % of the Slurm
-allocation). None of them changes a result; all can be set explicitly.
-
-## 5. Tests
-
-| Test | Checks |
-|---|---|
-| `test/regress.jl N out [golden]` | segment operators, spectra with and without X, residency modes, KK/Γ² edges, golden comparison |
-| `test/t1_equivalence.jl` … `t10_highscalar.jl` | building blocks: equivalence, exchange solve, runner, hashing, OPE, high scalars |
-| `test/t11_extend.jl`, `t12_gates.jl` | window extension; acceptance gates |
-| `test/t13_ph.jl N out projectors` | PH half build spans the direct build's multiplet subspaces |
-| `test/t14_v028.jl` | half-sector edge identity, upstream digests |
-| `test/t15_stageb_restart.jl` | Stage B restarts reuse windows, edges and projections; partly lost outputs are completed |
-| `analysis/hardgate/tests/`, `analysis/switch_kk/**/test_*.py` | the analyses on synthetic data |
-
-Give every test an output directory under your data root (for example `<data root>/tests/regress`).
-Results are reproducible to rounding, not bitwise across processes (threaded BLAS changes the last bits and hence
-eigenvector signs): compare magnitudes. When v0.3.0 was made, the whole chain was run against the earlier per-N code on
-N5 and N6; the differences were of the size of two runs of the same code (≤ 2e-11 absolute).
-
-## 6. Licence and credits
-MIT licence ([LICENSE](LICENSE)). Credits: [AUTHORS.md](AUTHORS.md). FuzzifiED is MIT-licensed as well; the one replaced
-file and its licence are in `deps/FuzzifiED-2.0.1/`.
+MIT 许可证（[LICENSE](LICENSE)）；署名见 [AUTHORS.md](AUTHORS.md)。FuzzifiED 同为 MIT 许可，替换的那一个文件及其许可证在
+`deps/FuzzifiED-2.0.1/`。使用本模板时，请同时引用 FuzzifiED 以及模型与 tuning 判据所依据的 fuzzy sphere SO(5) DQCP 文献
+（例如 arXiv:2306.16435）。

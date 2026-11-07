@@ -26,15 +26,14 @@ root ([DATA_LAYOUT.md](DATA_LAYOUT.md)), never into the repository.
 ## 3. First conversation: let the AI learn the project
 Copy this as the first message:
 
-> Read AGENTS.md, README.md, docs/en/METHODS.md and docs/en/DATA_LAYOUT.md. Do not run anything yet. Explain in one page:
+> Read AGENTS.md, README.md, docs/en/GUIDE.md, docs/en/METHODS.md and docs/en/DATA_LAYOUT.md. Do not run anything yet. Explain in one page:
 > what physical system this code studies, what the steps of `bin/tcc.jl` compute and in which order, which outputs hold
 > the final numbers, and which quantity is tuned to fix the coupling g. Cite the file for every statement.
 
-Check the answer against README §2 and METHODS §4–§7 yourself. If the agent states something without a file, ask for it.
+Check the answer against GUIDE §2 and METHODS §4–§7 yourself. If the agent states something without a file, ask for it.
 
 ## 4. Run a complete calculation (N = 5, a few minutes)
-> Run `julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml` (use `python = "python"` in [parity_join]
-> on Windows). When it finishes, list the output files and, for each, say in one line what it contains.
+> Run `julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml`. When it finishes, list the output files and, for each, say in one line what it contains.
 
 Main outputs under `<data root>/results/quickstart/N5/`:
 
@@ -49,14 +48,16 @@ Main outputs under `<data root>/results/quickstart/N5/`:
 | `stageb_half/`, `stageb_11/` | the (½,½) and (1,1) sectors: raw spectrum, KK modes, OPE components, raw-target edges |
 
 ## 5. Check the results — ask for these, with numbers
-Each check has an expected outcome you can verify in the file the agent names.
+Each check has an expected outcome you can verify in the file the agent names. `python tools/check_quickstart.py
+<data root>/results/quickstart/N5` runs all of them at once ([REPRODUCE.md](REPRODUCE.md) §2); ask the agent to show where
+each number comes from rather than only running the script.
 
 | # | Ask the agent to show | Expected | N5 quick start gave (reference) |
 |---|---|---|---|
 | 1 | `F` in `run/physics_report.toml` | \|F\| < 1e-5 (the tuned g gives Δ_T = 3) | −3.5e-7 |
 | 2 | Δ of the lowest C₂ = 3 state of (0,1) L1 and of the lowest C₂ = 0 state of (0,0) L2 in `summary.tsv` | exactly 2 (by definition) and ≈ 3 | 2.0 and 2.9999996 |
 | 3 | the largest `H_res` and `C2_res` in `summary.tsv` | ≤ 1e-6 (the code stops otherwise), in practice ~1e-10 or smaller | 6.6e-14, 1.8e-10 |
-| 4 | the same SO(5) multiplet in different (s_A, s_B) blocks: equal (L, C₂, energy) | energies agree to ~1e-12 or better | 271 pairs, max \|ΔE\| 3.9e-14 |
+| 4 | the same SO(5) multiplet in different (s_A, s_B) blocks: equal (L, C₂, energy) | energies agree to ~1e-12 or better | 316 pairs (counted as in `check_quickstart.py`), max \|ΔE\| 3.6e-14 |
 | 5 | `half_vs_integer_phi_energy_difference` in `run/ope/ope.toml` | ~1e-14: the half-integer and integer sectors give the same φ | 8.0e-15 |
 | 6 | column `ratio` of all P = −1 rows in `ope3/ope3_phiphi_spin_parity.csv` | ~0 (≤ 1e-12): φ×φ contains only P = +1 | 99 rows, max 9.2e-15 |
 | 7 | `status` in `stageb_half/raw_current_control.toml` | `pass`: the current has Δ = 2, P = +1 in the half sector | pass |
@@ -92,7 +93,7 @@ for N ≤ 6 when the code was written.
 > `configs/examples/N07.toml`, tell me the largest block dimension (METHODS §2.4) and the expected memory, and do not
 > start it before I confirm.
 
-Plans are described in README §2; every step records its plan in `plan.toml` in its output directory.
+Plans are described in GUIDE §2; every step records its plan in `plan.toml` in its output directory.
 
 ## 8. How to keep the AI honest
 - **Ask for evidence**: file and line for claims about code, file and value for claims about results, and whether it

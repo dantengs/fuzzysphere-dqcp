@@ -1,6 +1,6 @@
 # Fuzzy sphere SO(5) DQCP：方法与全部可调参数（Tcc v0.3.1）
 
-English: [../en/METHODS.md](../en/METHODS.md)。代码结构、plan 文件与测试：[README.md](README.md)；数据放在哪里：
+English: [../en/METHODS.md](../en/METHODS.md)。代码结构、plan 文件与测试：[GUIDE.md](GUIDE.md)；复现：[REPRODUCE.md](REPRODUCE.md)；数据放在哪里：
 [DATA_LAYOUT.md](DATA_LAYOUT.md)。本文与英文版逐节对应，学术名词保留英文原词。
 
 下文每个数值都给出代码默认值，或标明“原始研究”的取值（即本模板所源自的 N = 5–12 计算所用的值），以及设定它的文件

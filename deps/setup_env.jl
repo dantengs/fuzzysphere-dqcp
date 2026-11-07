@@ -27,7 +27,9 @@ Pkg.add([PackageSpec(name="FuzzifiED", version="2.0.1"), PackageSpec(name="Krylo
 reg = pkgroot("FuzzifiED")                                                     # the registered 2.0.1 tree (read-only)
 rm(FZ; recursive=true, force=true); cp(reg, FZ); chmod(FZ, 0o755; recursive=true)
 cp(PATCH, joinpath(FZ, REL); force=true)
-Pkg.rm("FuzzifiED"); Pkg.develop(path=FZ); Pkg.instantiate()
+Pkg.rm("FuzzifiED"); Pkg.develop(path=FZ)
+Pkg.compat("FuzzifiED", "=2.0.1")                                             # Pkg.rm dropped it; keeps env/Project.toml as tracked
+Pkg.instantiate()
 
 prod = TOML.parsefile(joinpath(@__DIR__, "production_sources.toml")); ok = true
 for (pkg, dir) in (("FuzzifiED.jl", FZ), ("KrylovKit.jl", pkgroot("KrylovKit")))

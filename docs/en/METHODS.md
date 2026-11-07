@@ -1,6 +1,6 @@
 # Fuzzy-sphere SO(5) DQCP: methods and every adjustable parameter (Tcc v0.3.1)
 
-Chinese version: [../zh/METHODS.md](../zh/METHODS.md). Code map, plan file and tests: [README.md](../../README.md).
+Chinese version: [../zh/METHODS.md](../zh/METHODS.md). Code map, plan file and tests: [GUIDE.md](GUIDE.md); reproduction: [REPRODUCE.md](REPRODUCE.md).
 Where your data go: [DATA_LAYOUT.md](DATA_LAYOUT.md).
 
 Every number below is the default of the code or, where marked "original study", the value used in the calculations

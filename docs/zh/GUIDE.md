@@ -1,30 +1,6 @@
-# Fuzzy sphere SO(5) DQCP 计算模板（Tcc v0.3.1）
+# Tcc 参考手册：代码结构、plan 文件、step、测试
 
-English: [../../README.md](../../README.md) · 方法：[METHODS.md](METHODS.md) · 你的数据与路径：[DATA_LAYOUT.md](DATA_LAYOUT.md) ·
-primary/descendant 分析：[ANALYSIS.md](ANALYSIS.md) · 借助 AI agent：[AI_GUIDE.md](AI_GUIDE.md)
-
-本模板用于计算 fuzzy sphere 上 SO(5) deconfined critical point 模型在任意 orbital 数 N 下的 spectrum、primary candidate
-（KK projection）、OPE 系数和 parity，并在此之后把各态分为 primary 与 descendant。**所有 N 用同一条代码路径。** 物理上唯一
-与 N 有关的分支是奇偶 N 下 C₂ cross-density 项的符号（`src/so5_c2_density_phase.jl`）。只影响速度或内存的选择按问题规模决定
-（`src/resources.jl`，METHODS §2.5），从不按 N。学术名词保留英文原词。
-
-仓库里只有代码、文档和参考 plan。**数据和路径归你自己：** 所有输出写到你选定的数据根目录下；与机器相关的设置放在 git 忽略的
-文件里（`user.toml`、`analysis/paths.local.json`、`cluster/*.sbatch`）。
-
-## 上手
-
-```bash
-cp user.example.toml user.toml                 # 设置 [paths] data_root（默认 ./data，已被 git 忽略）
-julia deps/setup_env.jl                        # 一次：建 env/（Julia 1.11；见 deps/README.md）
-julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml
-```
-
-最后一条命令在几分钟内（< 2 GB）跑完 N = 5 的完整链，输出到 `<数据根目录>/results/quickstart/N5/`。数据根目录依次取：
-`--data=DIR`、环境变量 `TCC_DATA`、`user.toml` 的 `[paths] data_root`、当前目录。Slurm 集群上复制 `cluster/tcc.sbatch.example`。
-借助 AI coding agent（Claude Code、Codex 等）学习、运行和检查代码，见 [AI_GUIDE.md](AI_GUIDE.md)；agent 自己的说明在
-[AGENTS.md](../../AGENTS.md)。
-
----
+English: [../en/GUIDE.md](../en/GUIDE.md) · 简介：[../../README.md](../../README.md) · 小 N 复现：[REPRODUCE.md](REPRODUCE.md) · 方法：[METHODS.md](METHODS.md) · 你的数据：[DATA_LAYOUT.md](DATA_LAYOUT.md)。学术名词保留英文原词。
 
 ## 1. 代码结构
 
@@ -46,6 +22,8 @@ julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml
 | `bench/*_run.jl` | 单个 step 的命令行形式 |
 | `tools/ope3_parity_join.py` | φ×φ tower 的 parity |
 | `tools/data_inventory.jl` | 由 run 记录生成你的数据清单 |
+| `tools/check_quickstart.py` | N5 quick start 的 PASS/FAIL 检查 |
+| `analysis/tools/demo_small_n.py` | 小 N 分析演示：KK 导出、κ 门槛、规则 C、家族检验 |
 | `configs/quickstart_N5.toml`、`example_N6.toml` | 小规模 run |
 | `configs/examples/N05.toml … N12.toml` | 参考 plan：原始研究在每个 N 算了什么 |
 | `cluster/tcc.sbatch.example` | 一个 plan 的 Slurm 作业 |
@@ -129,6 +107,7 @@ julia --project=env --threads=64 bin/tcc.jl N08.toml --data=/scratch/me # 换一
 
 | 测试 | 检查内容 |
 |---|---|
+| `tools/check_quickstart.py <out>/N5` | 按预期性质与参考值检查 N5 quick start（[REPRODUCE.md](REPRODUCE.md) §2） |
 | `test/regress.jl N out [golden]` | segment 算符、带/不带 X 的 spectrum、residency 模式、KK/Γ² edge、golden 对照 |
 | `test/t1_equivalence.jl` … `t10_highscalar.jl` | 基本组件：等价性、exchange 求解、runner、哈希、OPE、高 scalar |
 | `test/t11_extend.jl`、`t12_gates.jl` | 扩窗；验收 gate |
@@ -140,7 +119,3 @@ julia --project=env --threads=64 bin/tcc.jl N08.toml --data=/scratch/me # 换一
 测试输出目录请放在数据根目录下（例如 `<数据根目录>/tests/regress`）。结果在舍入误差内可重现，但跨进程不是逐位相同（多线程 BLAS
 改变末位，从而改变 eigenvector 符号）：比较绝对值。制作 v0.3.0 时，在 N5、N6 上把完整链与早期按 N 的代码对照过，差异与同一代码
 两次运行之间的差异同量级（绝对值 ≤ 2e-11）。
-
-## 6. 许可证与署名
-MIT 许可证（[LICENSE](../../LICENSE)）。署名见 [AUTHORS.md](../../AUTHORS.md)。FuzzifiED 同为 MIT 许可；替换的那一个文件及其许可证在
-`deps/FuzzifiED-2.0.1/`。
