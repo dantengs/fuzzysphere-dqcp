@@ -1,5 +1,4 @@
-# OPE stage (v0.1.11): port of Zhou v0.0.5 tuned_postprocess.jl (integer anchors) and
-# half_tuned.jl (half-integer (1/2,1/2) weight-(1,1) sector) onto Tcc runs.
+# OPE stage on Tcc runs: integer anchors and the half-integer (1/2,1/2) weight-(1,1) sector.
 #
 # Integer sector, (sA,sB) = (0,0):
 #   normalization  n = |<phi| Gamma^2_0 |0>|          phi = lowest C2=2 of L0, 0 = lowest C2=0 of L0
@@ -11,7 +10,7 @@
 #   f_phiphiJ = sqrt(3) |<J| Gamma^2_1 |phi>| / n ,   f_phiphiT = sqrt(2) |<phi| Gamma^2_0 |T>| / n
 # with signed reduced conjugacy gates.  Finite-N estimates; not certified CFT data.
 
-"""Half-integer segment space (one SegSpace, segment spin 1/2) — frozen half_model.jl."""
+"""Half-integer segment space (one SegSpace, segment spin 1/2)."""
 function build_half_segment(nm::Int)
     sec_pt = stack([[ne, ((nm + 1) * ne) % 2, 1] for ne in 1:2:(2nm-1)])
     qnd_pt = [GetNeQNDiag(2nm), GetLz2QNDiag(nm, 2), GetFlavQNDiag(nm, 2, [1, -1])]

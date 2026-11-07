@@ -179,7 +179,7 @@ L_i = 0): target windows of L = 0…source_lmax + 1, source_lmax = max(`spectrum
   `GATE_FAIL`, −1e-7…guard grows the window.
 - Original study: `initial_nev` = nev of the run, `max_nev` 4000 (N5–11), 400 (N12), `target_parity = "both"`.
 
-## 7. KK projection (primary candidates; `src/kkstage.jl`, `src/ZhouGenerator.jl`)
+## 7. KK projection (primary candidates; `src/kkstage.jl`, `src/kk_generator.jl`)
 - Generator candidates: l = 1 components of O₁ = (n†n) and O₂ = (Δ†Δ) (`GetDensityObs`, `GetPairingObs(…, mom_incr=false)`,
   `ObsNormRadSq = N`; pairing m → −m with i^{2m}; segment couplings × 1/(N√(4π)), density × 2, both orders of pairing;
   O₂ sign flipped for odd rank); K = c₁O₁ + c₂O₂, lowering part only.
@@ -295,7 +295,7 @@ hence coverage and channel status), **performance** (speed/memory only; results 
 | basis.segment_checkpoint, basis.ph_half | "", auto | "", auto | gauge only |
 | targets.initial_nev, max_nev, guard, source_delta_max (= plan.delta_max) | 12, 100, 1e-5, none | nev, 4000/400, 1e-5, 6.2 | window |
 | targets.target_growth, first_k, independent_check, target_parity | fresh, estimate, complement, both | same | performance / acceptance |
-| kk.thresholds, report_threshold, pairs, lmax, legacy_calibration | [0.05,0.1,0.25,0.5], 0.25, all, source_lmax, none | same | decision / window |
+| kk.thresholds, report_threshold, pairs, lmax | [0.05,0.1,0.25,0.5], 0.25, all, source_lmax | same | decision / window |
 | ope.edges, half (= plan.half), threshold, reference | [[0,0,0],[2,0,2]], false, 0.25, none | default, true | window |
 | ope3.* | §9 | §9 | window / decision |
 | parity.targets, vacuum_raw | true (step), from (0,0) L0 | same | convention |

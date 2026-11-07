@@ -9,7 +9,7 @@ English: [../en/GUIDE.md](../en/GUIDE.md) · 简介：[../../README.md](../../RE
 | `src/model.jl`、`ph.jl`、`seglib.jl`、`exchange.jl` | 模型、segment space（直接 / particle–hole 半构造）、segment 算符库、segment exchange X |
 | `src/resources.jl` | `ph_half` 与 `residency` 按规模的默认值 |
 | `src/runner.jl`、`matvec.jl` | (s_A, s_B, L) block 的 spectrum、residency 模式、H 作用 kernel |
-| `src/targets.jl`、`edges.jl`、`kkstage.jl`、`ZhouGenerator.jl`、`kk/KKProjection.jl` | KK target window、edge、真空拟合、K² 分类 |
+| `src/targets.jl`、`edges.jl`、`kkstage.jl`、`kk_generator.jl`、`kk_projection.jl` | KK target window、edge、真空拟合、K² 分类 |
 | `src/tuning.jl` | coupling tuning F(g) = 0 |
 | `src/ope.jl`、`ope3.jl` | pipeline OPE；三点 insertion 与扩展 OPE |
 | `src/parity.jl` | 物理 parity |

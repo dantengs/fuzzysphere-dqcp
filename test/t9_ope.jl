@@ -1,4 +1,4 @@
-# OPE stage against the frozen low-N references of half_model.jl (g = 0.9437):
+# OPE stage against fixed low-N reference values (g = 0.9437):
 #   N4: f_phiphiJ = 0.7343328726999043, f_phiphiT = 1.1014564638818614
 #   N6: f_phiphiJ = 0.7504299632109654, f_phiphiT = 1.1515489286980547
 # usage: julia --threads=T t9_ope.jl out

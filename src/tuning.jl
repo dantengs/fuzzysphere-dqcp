@@ -1,4 +1,4 @@
-# Coupling tuning stage (v0.1.9): port of Zhou v0.0.5 coordinator.find_root + sector_worker.
+# Coupling tuning stage: safeguarded root search for F(g) = 0.
 #
 #   F(g) = 2 (E_stress - E_0) / (E_current - E_0) - 3
 #   ground  = lowest C2 = 0 state of (0,0,L0)     current = lowest C2 = 3 state of (0,1,L1)
@@ -24,7 +24,7 @@ mutable struct TuneBlock
     sector::Any          # ExchangeSector (X = +1) or nothing
 end
 
-"""Pure safeguarded root controller (verbatim logic of v0.0.5 coordinator.find_root)."""
+"""Pure safeguarded root controller (bracket/secant search inside bounds)."""
 function find_root(evaluate, start; bounds=(0.90, 1.12), maxpoints=16, ftol=1e-5, xtol=1e-4)
     lo, hi = bounds; points = Dict{Float64,Float64}()
     function record(g)

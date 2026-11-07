@@ -1,4 +1,4 @@
-module ZhouGenerator
+module KKGenerator
 
 using FuzzifiED
 using FuzzifiED.SO3lver
@@ -6,11 +6,11 @@ using LinearAlgebra
 
 export generator_candidates, generator_operator, generator_integral_candidates
 
-"""Historical two-term SO(5) DQCP local generator in Zhou's two segments.
+"""Two-term local candidates for the SO(5) DQCP conformal generator in the 2+2 segment basis.
 
-Each candidate is the l=1 spherical component of the four-flavor local
-observable used by the September 5 Fock calculation: n†n and Δ†Δ. The
-four flavors are grouped into the two symplectic pairs (1,2) and (3,4).
+Each candidate is the l=1 spherical component of a four-flavour local
+observable, n†n or Δ†Δ. The four flavours are grouped into the two
+symplectic pairs (1,2) and (3,4), one pair per segment.
 The contact couplings integrate √(4π)Y* on a sphere of radius²=N;
 division by N√(4π) restores the component convention of `GetComponent`.
 The same construction with rank 0 permits an independent integral gate.

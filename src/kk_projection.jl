@@ -7,7 +7,7 @@ using SHA
 export checked_checkpoint, save_checkpoint, projected_transition, project_channel,
        fit_vacuum_generator, state_window, closure_report
 
-"""Read a Zhou checkpoint only after verifying its payload hash."""
+"""Read a checkpoint only after verifying its payload hash."""
 function checked_checkpoint(path::AbstractString; expected_meta=nothing)
     payload = joinpath(path, "payload.jls")
     digest = joinpath(path, "sha256.txt")
@@ -58,7 +58,7 @@ function state_window(eig, diagnostics; tolerance=1e-6)
     (E=E, V=V, rows=rows)
 end
 
-"""Minimum vacuum leakage with one real calibration constraint, as in 9/5 code."""
+"""Minimum vacuum leakage with one real calibration constraint."""
 function fit_vacuum_generator(vacuum_images::AbstractMatrix, calibration::AbstractVector,
                               target::Real; rtol=1e-11)
     size(vacuum_images, 2) == length(calibration) || throw(DimensionMismatch())
@@ -120,7 +120,7 @@ end
 
 """Classify K² within one fixed Casimir channel and known L=0→1 component.
 
-The factor 3 is the historical reduced q=1 convention. An unmatched target
+The factor 3 is the reduced q=1 convention. An unmatched target
 or a missing L=1 block is an error, never an implicit zero contribution.
 """
 function project_channel(overlap, source_E, target_E; threshold=0.25,

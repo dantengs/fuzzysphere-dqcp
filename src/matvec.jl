@@ -1,4 +1,4 @@
-# Load-balanced composite-operator action for two-part (Zhou 2+2) CompOperators (Tcc v0.0.1).
+# Load-balanced composite-operator action for two-part (2+2 segment) CompOperators.
 #
 # FuzzifiED's (v0.0.4 typed, channel-owned) action gives each destination channel to one
 # task.  On large blocks a few destination channels dominate, so the critical path stops

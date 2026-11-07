@@ -161,7 +161,7 @@ xtol = 1e-4 时，在最优点两侧 ±0.49 xtol 各取一点。接受条件：�
 - 独立复核（默认 `complement`）：窗口正交补中最低 2 个态（换种子）；margin < −1e-7 为 `GATE_FAIL`，−1e-7…guard 则扩窗。
 - 原始研究：`initial_nev` = run 的 nev，`max_nev` 4000（N5–11）、400（N12），`target_parity = "both"`。
 
-## 7. KK projection（primary candidate；`src/kkstage.jl`、`src/ZhouGenerator.jl`）
+## 7. KK projection（primary candidate；`src/kkstage.jl`、`src/kk_generator.jl`）
 - generator 候选：O₁ = (n†n) 与 O₂ = (Δ†Δ) 的 l = 1 分量（`GetDensityObs`、`GetPairingObs(…, mom_incr=false)`，`ObsNormRadSq = N`；
   pairing 取 m → −m 并补 i^{2m}；segment 间耦合乘 1/(N√(4π))，density 再乘 2，pairing 取两种序；奇数 rank 时 O₂ 取负号）；
   K = c₁O₁ + c₂O₂，只取 lowering 部分。
@@ -266,7 +266,7 @@ source（Δ ≤ 5.0）用其**完整**保存的系数向量（无 support 阈值
 | basis.segment_checkpoint、basis.ph_half | ""、auto | ""、auto | 只影响 gauge |
 | targets.initial_nev、max_nev、guard、source_delta_max（= plan.delta_max） | 12、100、1e-5、无 | nev、4000/400、1e-5、6.2 | 窗口 |
 | targets.target_growth、first_k、independent_check、target_parity | fresh、estimate、complement、both | 同左 | 性能 / 验收 |
-| kk.thresholds、report_threshold、pairs、lmax、legacy_calibration | [0.05,0.1,0.25,0.5]、0.25、全部、source_lmax、无 | 同左 | 判定 / 窗口 |
+| kk.thresholds、report_threshold、pairs、lmax | [0.05,0.1,0.25,0.5]、0.25、全部、source_lmax | 同左 | 判定 / 窗口 |
 | ope.edges、half（= plan.half）、threshold、reference | [[0,0,0],[2,0,2]]、false、0.25、无 | 默认、true | 窗口 |
 | ope3.* | §9 | §9 | 窗口 / 判定 |
 | parity.targets、vacuum_raw | true（step）、取自 (0,0) L0 | 同左 | 约定 |

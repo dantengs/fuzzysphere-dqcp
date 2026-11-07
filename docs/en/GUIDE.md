@@ -9,7 +9,7 @@
 | `src/model.jl`, `ph.jl`, `seglib.jl`, `exchange.jl` | model, segment spaces (direct / particle–hole half build), segment operator library, segment exchange X |
 | `src/resources.jl` | size-based defaults of `ph_half` and `residency` |
 | `src/runner.jl`, `matvec.jl` | spectrum of (s_A, s_B, L) blocks, residency modes, H action kernels |
-| `src/targets.jl`, `edges.jl`, `kkstage.jl`, `ZhouGenerator.jl`, `kk/KKProjection.jl` | KK target windows, edges, vacuum fit, K² classification |
+| `src/targets.jl`, `edges.jl`, `kkstage.jl`, `kk_generator.jl`, `kk_projection.jl` | KK target windows, edges, vacuum fit, K² classification |
 | `src/tuning.jl` | coupling tuning F(g) = 0 |
 | `src/ope.jl`, `ope3.jl` | pipeline OPE; three-point insertions and extended OPE |
 | `src/parity.jl` | physical parity |

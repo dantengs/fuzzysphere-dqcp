@@ -1,9 +1,10 @@
-# Matrix-element "edges" for KK and OPE (Tcc v0.0.1).
+# Matrix-element "edges" for KK and OPE.
 #
 # An edge (source block L_i -> target block L_f, local operator candidates t_1..t_n of rank r)
-# produces exactly the arrays the v0.0.5 / n11 pipelines store:
+# produces the arrays
 #   overlaps[p][:, j] = T' * (O_p * S[:, j])      image_gram[p, q, j] = <O_p S_j, O_q S_j>
-# Differences from the frozen implementation are only in how the same numbers are produced:
+# Compared with the plain FuzzifiED construction (edge_arrays_reference below), only the way the
+# same numbers are produced differs:
 #   * segment operators come from the shared SegLibrary (no rebuild per edge / per term),
 #   * each O_p acts on a block of source columns at once (tcc_mul_block!),
 #   * source columns are processed in chunks to bound image memory (Dt * chunk * 8 bytes per term).
@@ -19,13 +20,13 @@ end
     kk_terms(N; cache="")
 
 KK generator candidates (density^2, symplectic pair^2) of rank 1.  With `cache` a directory,
-the CoupleDecomps are stored once per (N, ZhouGenerator source, FuzzifiED source tree, Julia
+the CoupleDecomps are stored once per (N, KKGenerator source, FuzzifiED source tree, Julia
 version) and reloaded (v0.1.3: 23/38/85 s at N = 10/11/12 become a file read).
 """
 function kk_terms(N::Int; cache::AbstractString="")
-    build() = (c = ZhouGenerator.generator_candidates(N); [c.density_squared, c.symplectic_pair_squared])
+    build() = (c = KKGenerator.generator_candidates(N); [c.density_squared, c.symplectic_pair_squared])
     isempty(cache) && return build()
-    key = bytes2hex(sha256(string("kk_terms-v1|N=", N, "|gen=", file_digest(joinpath(@__DIR__, "ZhouGenerator.jl")),
+    key = bytes2hex(sha256(string("kk_terms-v1|N=", N, "|gen=", file_digest(joinpath(@__DIR__, "kk_generator.jl")),
                                   "|fz=", tree_digest(dirname(pathof(FuzzifiED))), "|jl=", VERSION)))
     dir = joinpath(cache, "kk_terms_N$(N)_$(key[1:16])")
     isdir(dir) && return _checked_load(dir).terms
@@ -152,7 +153,7 @@ function edge_arrays_incremental(lib::SegLibrary, ss::AbstractVector, sp, tp, te
      reused=(sources=length(ms), targets=length(mt), new_sources=length(ns), new_targets=length(nt)))
 end
 
-"""Frozen reference: per-edge BuildSegOperators and one source vector at a time (v0.0.5 tuned_postprocess)."""
+"""Reference construction: per-edge BuildSegOperators and one source vector at a time (plain FuzzifiED)."""
 function edge_arrays_reference(ss::AbstractVector, sp, tp, terms, ltot2::Int,
                                S::AbstractMatrix{Float64}, T::AbstractMatrix{Float64};
                                native::Int=8, action::Int=64, st=nothing)

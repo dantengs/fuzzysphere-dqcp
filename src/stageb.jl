@@ -4,13 +4,9 @@
 #   sector "half": the half-integer sector (1/2,1/2) (segments with odd ne, segment spin 1/2, Q = [2N,0,2]);
 #   sector "11"  : the integer (1,1) sector with windows grown to the raw Delta cut.
 #
-# Merged from the production scripts (identical physics, thresholds, seeds and floating-point operations):
-#   xy_half_extend.jl   53d551e2  N5-N10 half, N5-N7 (1,1)      (spin range lmax = 4, raw windows L0-5)
-#   xy_half_resume.jl   3729d7ad  N11 half                       (lmax = 3: raw L0-4, KK/OPE L0-3)
-#   xy_half_lean.jl     stageB-v2-lean  N12 half                (memory-lean buffers, parallel window jobs)
-# The window solver is the lean one; its functions repeat the floating-point operations of the frozen
-# Tcc functions named in their docstrings (bitwise A/B: lean_compare.jl N8, test/t16_unified.jl).
-# What were environment variables of those scripts are now keys of the [stageb] table:
+# The window solver uses memory-lean buffers; its functions repeat the floating-point operations of the
+# Tcc functions named in their docstrings (bitwise identical results).
+# Options are keys of the [stageb] table:
 #
 #   out, ope3 (the run's ope3 directory: half segment basis, half windows as deflation priors, phi-J edge),
 #   sector ("half"), lmax (4; KK sources and OPE spins 0..lmax, raw windows 0..lmax+1),
@@ -128,7 +124,7 @@ function lean_deflated_into!(f, n::Int, k::Int, V0::AbstractMatrix{Float64}, des
         v = V[j]; W[:, j] = v - V0 * (V0' * v); V[j] = Float64[]
     end
     V = nothing; GC.gc()
-    Qw = Matrix(qr!(W).Q)                        # qr(W) of the frozen code = qr! on its copy
+    Qw = Matrix(qr!(W).Q)                        # qr(W) of the reference code = qr! on its copy
     size(Qw, 2) == r || (Qw = Qw[:, 1:r])
     W = nothing; GC.gc()
     FQ = Matrix{Float64}(undef, n, r)
@@ -150,7 +146,7 @@ columns are copied once into the grown window and the old matrix is released bef
 function lean_target_window!(box::Ref{Any}, H, D::Int, k::Int, seed::Int, act::Int, tol)
     f = v -> *(H, v; num_th=act)
     pr = box[]; box[] = nothing
-    if pr === nothing || isempty(pr.energy)                  # frozen: empty prior -> plain lowest
+    if pr === nothing || isempty(pr.energy)                  # empty prior -> plain lowest
         e, V = lean_lowest(f, D, k, seed + 7; tol)
         GC.gc()
         o = sortperm(e); W = Matrix{Float64}(undef, D, length(e))
@@ -203,7 +199,7 @@ function lean_polish_c2!(E, V, parity, H, C; window=1e-3, trigger=1e-7, workers=
 end
 
 """Tcc._complement_check(H, cp, 0, 0, w, Dict(0=>D), false, act, tol, seed).min_margin with the window
-matrix itself as deflation basis (the frozen code copies it into V0 first)."""
+matrix itself as deflation basis (the reference function copies it into V0 first)."""
 function lean_complement_check(H, D::Int, E::AbstractVector, V::Matrix{Float64}, act::Int, tol, seed::Int; nextra::Int=2)
     m = length(E); m >= D && return (min_margin=Inf,)
     f = v -> *(H, v; num_th=act)
@@ -237,8 +233,7 @@ end
 
 """
 Tensor insertion Q_G of rank l as two parts (density, pairing); the (-1)^rank combination is applied by the
-analysis, never here.  Verbatim from the production scripts (xy_blocks.jl, xy_half_extend.jl, xy_full_sources.jl);
-ObsNormRadSq = 1 and the 1/N^2 radius factor in the prefactor.
+analysis, never here.  ObsNormRadSq = 1 and the 1/N^2 radius factor in the prefactor.
 """
 function tensor_g_parts(N, l)
     n = GetDensityObs(N, 2, Matrix{Float64}(I, 2, 2); norm_r2=1.0)
@@ -808,7 +803,7 @@ end
     run_rawtarget(c, o)
 
 OPE edges of the Stage B scalar sources onto the FULL raw target windows (every saved raw eigenstate of
-L = 0..lmax), so that the analysis can project onto any target basis (from xy_half_rawtarget.jl, rawtarget-v1).
+L = 0..lmax), so that the analysis can project onto any target basis (rawtarget-v1).
 Writes below `o["rawtarget_out"]` (default <stageb out>/rawtarget).  Gates: projecting the raw-target matrix
 onto the production target modes reproduces the Stage B edge and its image Gram (rel <= 1e-10); captured
 norm never exceeds the full image norm.

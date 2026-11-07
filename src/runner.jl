@@ -1,8 +1,8 @@
-# General-N spectrum runner (Tcc_v0.0.1).
+# General-N spectrum runner.
 #   * one segment-operator library per run: H, C2 and all (sA,sB) pairs share operators;
 #   * diagonal blocks (s,s,L) can be solved per segment-exchange parity in half-length space;
 #   * every block result is an atomic, checksummed checkpoint; a restart skips finished blocks.
-# Physics (H, C2, phase convention, basis) is the frozen Zhou v0.0.5 definition.
+# Physics (H, C2, phase convention, basis): src/model.jl, src/so5_c2_density_phase.jl.
 
 function _atomic_save(path, payload)
     ispath(path) && error("refusing to overwrite $path")

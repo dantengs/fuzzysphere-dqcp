@@ -1,4 +1,4 @@
-# KK target windows on the Tcc library (v0.1.6; replaces n11 production extend_targets.jl).
+# KK target windows on the Tcc library.
 #
 # For every (sA,sB) pair the KK projection of a source block (L = s) needs complete target
 # windows in L' in {s-1, s, s+1} up to the highest source energy.  For each target block
@@ -6,7 +6,7 @@
 # required energy; otherwise the lowest window is solved with growing k (exchange-parity
 # sectors on diagonal blocks), re-checked with an independent seed (energies and subspace),
 # C2 resolved inside numerically degenerate clusters, and checkpointed atomically.
-# Same acceptance rules as the frozen implementation (frontier_status / requests).
+# Acceptance rules: frontier_status / target_requests.
 
 """Largest source L of a run (v0.2.2): spectrum.lmax, or the largest L of an explicit block list added later
 with `extend` (lmax itself is a frozen physics key, so a window extension to L = lmax+1 lists the blocks)."""

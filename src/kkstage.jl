@@ -1,16 +1,13 @@
-# KK primary projection and OPE insertion edges on Tcc runs (v0.1.7).
+# KK primary projection and OPE insertion edges on Tcc runs.
 #
-# Port of the n11 production KK flow (kk/run_kk.jl: make_edge, calibration, classify_edges,
-# export_pair) onto Tcc run directories:
+# Edges, vacuum calibration, K^2 classification and CSV exports on Tcc run directories:
 #   source windows  = out/blocks/<key>/eig.ckpt (+ result.ckpt C2 labels)
 #   target windows  = out/targets/<key>.ckpt (extend_targets)
 #   generator edges = edge_arrays on the shared segment-operator library
-# The mathematics (C2-preservation check, vacuum calibration with fit_vacuum_generator,
-# K^2 = sum_lf (2lf+1)/(2li+1) K'K with strictly lowering mask, thresholds .05/.1/.25/.5,
-# CSV exports) is unchanged.  The frozen N=11 legacy-coefficient regression is applied
-# when the config provides it (kk.legacy_calibration).
+# Mathematics: C2-preservation check, vacuum calibration with fit_vacuum_generator,
+# K^2 = sum_lf (2lf+1)/(2li+1) K'K with strictly lowering mask, thresholds .05/.1/.25/.5.
 
-include(joinpath(@__DIR__, "..", "kk", "KKProjection.jl"))   # verbatim n11 module
+include("kk_projection.jl")
 using .KKProjection: fit_vacuum_generator
 
 _ckpt_sha(path) = strip(read(joinpath(path, "sha256.txt"), String))
@@ -66,7 +63,7 @@ function kk_edge!(ctx::KKContext, a, b, li, lf)
     S = source_window(ctx.out, a, b, li; vectors=false); T = target_window(ctx.out, a, b, lf; vectors=false)
     (S === nothing || T === nothing) && return nothing
     identity = (source_sha=S.sha, target_sha=T.sha, basis_sha=ctx.basis_sha, tcc=string(TCC_VERSION),
-                generator=file_digest(joinpath(@__DIR__, "ZhouGenerator.jl")))
+                generator=file_digest(joinpath(@__DIR__, "kk_generator.jl")))
     old = nothing
     if isdir(path)
         old = _checked_load(path)
@@ -105,7 +102,7 @@ function _supersede!(path)
     mv(path, "$path.superseded.$n"); "$path.superseded.$n"
 end
 
-"""Vacuum calibration of the two generator candidates (frozen n11 rule)."""
+"""Vacuum calibration of the two generator candidates."""
 function kk_calibration!(ctx::KKContext)
     path = joinpath(ctx.out, "kk", "calibration.ckpt")
     e = kk_edge!(ctx, 0, 0, 0, 1); e === nothing && error("Missing (0,0) L0 -> L1 calibration edge")
@@ -125,20 +122,14 @@ function kk_calibration!(ctx::KKContext)
     D = eigen(Hermitian(e.image_gram[:, :, v])); factor = Diagonal(sqrt.(max.(D.values, 0))) * D.vectors'
     fit = fit_vacuum_generator(factor, amplitudes * sgn, sqrt(2delta))
     coefficients = fit.coefficients
-    legacy = get(get(ctx.cfg, "kk", Dict()), "legacy_calibration", nothing)
-    if legacy !== nothing
-        norm(coefficients - legacy["coefficients"]) <= 1e-5 || error("Frozen generator coefficient regression failed")
-        abs(alpha - legacy["alpha"]) <= 1e-10 || error("Frozen energy scale regression failed")
-        coefficients = Float64.(legacy["coefficients"])
-    end
-    r = (coefficients=coefficients, alpha=alpha, E0=e.source_E[v], current_sha=J.sha, edge_identity=e.identity,
+    r =(coefficients=coefficients, alpha=alpha, E0=e.source_E[v], current_sha=J.sha, edge_identity=e.identity,
          vacuum=v, singlet=s, current=current, descendant=descendant,
          descendant_gap_error=alpha * (e.target_E[descendant] - e.source_E[s]) - 1, leakage=fit.leakage,
          calibration_error=fit.calibration_error)
     _atomic_save(path, r); r
 end
 
-"""Per-C2 K^2 classification of one source block (frozen n11 classify_edges)."""
+"""Per-C2 K^2 classification of one source block."""
 function kk_classify(edges, S, li, coeff; threshold=0.25)
     required = li == 0 ? [1] : [li - 1, li, li + 1]
     missing = setdiff(required, [e.lf for e in edges]); result = Any[]
@@ -175,7 +166,7 @@ function kk_classify(edges, S, li, coeff; threshold=0.25)
     result
 end
 
-"""SO(5) highest-weight types with Casimir c (type only, not copies) — frozen v0.0.5 so5_types."""
+"""SO(5) highest-weight types with Casimir c (type only, not copies)."""
 function so5_types(c)
     found = String[]
     for x in 0:(ceil(Int, 2 * sqrt(2 * max(c, 0))) + 2)
@@ -189,7 +180,7 @@ function so5_types(c)
     found
 end
 
-"""Reduced Hermitian conjugacy of a forward/reverse edge pair (frozen v0.0.5 reverse_check).
+"""Reduced Hermitian conjugacy of a forward/reverse edge pair.
 Eligible only when both target windows are the run's own windows (same eigenvector gauge)."""
 function kk_conjugacy(fwd, rev, factor)
     (fwd.target_status == "reused_run_window" && rev.target_status == "reused_run_window") ||
@@ -201,7 +192,7 @@ function kk_conjugacy(fwd, rev, factor)
     Dict{String,Any}("status" => "passed_common_original_indices", "factor" => factor, "errors" => errors)
 end
 
-"""Same-L rotation-identity ambiguity diagnostic (frozen v0.0.5 mu_diagnostic)."""
+"""Same-L rotation-identity ambiguity diagnostic."""
 function kk_mu(e, coeff)
     M = coeff[1] * e.overlaps[1] + coeff[2] * e.overlaps[2]; L = e.li; rot = sqrt(L * (L + 1)); B = e.basis_overlap
     mu = dot(B, M) / max(sum(abs2, B), eps()) / rot

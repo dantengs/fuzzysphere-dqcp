@@ -1,9 +1,9 @@
 # Physical model for the four-flavour SO(5) DQCP on the fuzzy sphere, general N.
-# Expressions are byte-for-byte the frozen Zhou v0.0.5 formulas (run_so5_resume.jl,
-# so5_g_scan.jl, n11 physical_model.jl); only the bookkeeping is generalised.
+# The 2+2 segment construction (quantum numbers, sectors, C2 terms) follows the SO(5) DQCP example
+# examples/so3lver/so5_dqcp_spectrum.jl of FuzzifiED (Zheng Zhou), written for general N.
 #   H(g) = H_den - g H_pair ;  C2 uses the parity-corrected cross-density coefficient.
 
-"""Segment-space construction parameters used by every Zhou-lineage run."""
+"""Segment-space construction parameters (two segments of two flavours each)."""
 function segment_setup(nm::Int)
     ne = 2nm
     qnd_pt = [GetNeQNDiag(nm * 2), GetLz2QNDiag(nm, 2), GetFlavQNDiag(nm, 2, [1, -1])]
@@ -15,7 +15,7 @@ function segment_setup(nm::Int)
     (; qnd_pt, tms_lzlp_pt, tms_c2, sec_pt, s_rng, c2_rng, sec_tot=[ne, 0, 0])
 end
 
-"""Build the three integer-spin segment spaces (s=0,1,2) exactly as the frozen runner.
+"""Build the three integer-spin segment spaces (s=0,1,2).
 `ph = true` (v0.1.17): diagonalise only ne <= N and generate ne > N by particle-hole (src/ph.jl);
 same multiplet subspaces, different multiplet gauge."""
 function build_segment_spaces(nm::Int; ph::Bool=false)

@@ -1,10 +1,7 @@
-# ope3.jl (Tcc v0.2.1, 2026-10-12/13): three-point local insertions and extended phi x phi channels
+# ope3.jl: three-point local insertions and extended phi x phi channels
 # on finished Tcc run directories.  Read-only on the run: every result goes to a separate directory.
 #
-# Ported (same operators, same calibration) from the validated N10/N11 routes
-#   ope_n11_singlet_route/run_n11_singlet_core.jl + run_n11_singlet_tensor.jl  (singlet insertion O_S)
-#   ope_tensor_n11/tensor_n11_integer.jl + ope_tensor_zhou/tensor_local_terms.jl (tensor insertion Q_G)
-# The F (half-sector) tensor component is not used: the N10/N11 routes showed F = G to 1e-14.
+# The F (half-sector) tensor component is not used: at N10/N11 F = G to 1e-14.
 #
 # Integer sector (sA,sB) = (0,0), windows of the run (raw eigenstates and KK-projected modes):
 #   Gamma^2 density  n_l = n_A - n_B (phi component), any rank l:     <Y|n_l|X>
@@ -24,7 +21,7 @@
 const OPE3_VERSION = "ope3-v1"
 spin_factor(l::Int) = sqrt(prod(1:2:(2l+1)) / factorial(l))
 
-"""Q_G via the exact SO(5) Fierz identity (verbatim ope_tensor_zhou/tensor_local_terms.jl, sha cdf68369)."""
+"""Q_G via the exact SO(5) Fierz identity."""
 function tensor_g_fierz_couplings(nm; radius2=1.0)
     n = GetDensityObs(nm,2,Matrix{Float64}(I,2,2);norm_r2=1.0)
     Ω = Float64[0 1;0 0]
@@ -44,7 +41,7 @@ function tensor_g_fierz_couplings(nm; radius2=1.0)
         (aa+bb-ab-k*(na+nb)-2*(pair_ab+pair_ba))
 end
 
-# ---- four-flavour Terms gate for Q_G (verbatim logic of tensor_local_terms.jl, own CG for j j -> 0) ----
+# ---- four-flavour Terms gate for Q_G (own CG for j j -> 0) ----
 const _τx = ComplexF64[0 1; 1 0]; const _τy = ComplexF64[0 -im; im 0]; const _τz = ComplexF64[1 0; 0 -1]
 const _id2 = Matrix{ComplexF64}(I, 2, 2)
 const _Γ5 = (kron(_id2, _τx), kron(_id2, _τz), kron(_τx, _τy), kron(_τy, _τy), kron(_τz, _τy))
@@ -75,8 +72,8 @@ function _expanded_coupling_terms(nm, cpds)
     SimplifyTerms(out)
 end
 
-"""Run `f` with FuzzifiED.ObsNormRadSq = r2 (ContactCouple coefficients scale with it; the frozen tensor
-route built Q_G with the package default 1.0, whereas ZhouGenerator sets it to N)."""
+"""Run `f` with FuzzifiED.ObsNormRadSq = r2 (ContactCouple coefficients scale with it; Q_G is built
+with the package default 1.0, whereas KKGenerator sets it to N)."""
 function with_obs_r2(f, r2)
     old = FuzzifiED.ObsNormRadSq; FuzzifiED.ObsNormRadSq = Float64(r2)
     try; return f(); finally; FuzzifiED.ObsNormRadSq = old; end
@@ -93,12 +90,12 @@ end
 """Operator term sets, cached per (N, kind, rank) next to the KK term cache."""
 function ope3_terms(N::Int, kind::Symbol, rank::Int; cache::AbstractString="")
     build() = kind === :gamma2 ? gamma2_terms(N, rank) :
-              kind === :singlet ? (c = ZhouGenerator.generator_candidates(N; rank); [c.density_squared, c.symplectic_pair_squared]) :
+              kind === :singlet ? (c = KKGenerator.generator_candidates(N; rank); [c.density_squared, c.symplectic_pair_squared]) :
               kind === :tensor_g ? (rank == 0 || error("Q_G is rank 0"); with_obs_r2(() -> [tensor_g_fierz_couplings(N; radius2=Float64(N))], 1.0)) :
               error("unknown term kind $kind")
     isempty(cache) && return build()
     key = bytes2hex(sha256(string("ope3_terms-v2|", kind, "|r=", rank, "|N=", N, "|src=", file_digest(@__FILE__),
-                                  "|gen=", file_digest(joinpath(@__DIR__, "ZhouGenerator.jl")),
+                                  "|gen=", file_digest(joinpath(@__DIR__, "kk_generator.jl")),
                                   "|fz=", tree_digest(dirname(pathof(FuzzifiED))), "|jl=", VERSION)))
     dir = joinpath(cache, "ope3_$(kind)_r$(rank)_N$(N)_$(key[1:16])")
     isdir(dir) && return _checked_load(dir).terms
@@ -250,7 +247,7 @@ function run_ope3(cfg, spaces, basis_sha, od; opts=Dict{String,Any}())
     gates["hermiticity_singlet_L0"] = maximum(herm.(b0)); gates["hermiticity_tensorG_L0"] = herm(q0)
     gates["hermiticity_gamma2_L0"] = herm(g0); gates["hermiticity_singlet_L2"] = maximum(herm.(b22))
     maximum(v for (k, v) in gates if startswith(k, "hermiticity")) < 1e-7 || error("ope3 hermiticity gate failed: $gates")
-    # ---------------- calibration (frozen N11 route) ----------------
+    # ---------------- calibration ----------------
     nrm0 = g0[iphi, ivac]; aphi = sign(nrm0); nrm = abs(nrm0); nrm > 1e-12 || error("vanishing phi normalisation")
     aS = sign(aphi * g0[iphi, iS]); aS != 0 || error("phi-to-S anchor vanished")
     stress_raw = [b2[c][istress, 1] for c in 1:2]; S_raw = [aS * b0[c][iS, ivac] for c in 1:2]

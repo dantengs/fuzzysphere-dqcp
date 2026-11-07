@@ -1,4 +1,4 @@
-# Physical parity P on composite states (v0.2.2 research, 2026-10-13).
+# Physical parity P on composite states.
 #
 # Zhou-Hu-Zhu-He (arXiv:2306.16435) use the particle-hole transformation c -> J c^dagger (with i -> -i)
 # as the improper O(3) element (phi is P-odd).  In the 2+2 segment form J pairs the two flavours of a
@@ -9,7 +9,7 @@
 # multiplet |ne, l, α> of a segment space to a combination of the multiplets |2N-ne, l, β>; the
 # orthogonal matrices U^(l) are computed here from the stored representative components (sts).
 # On a composite channel (A sector, B sector, l_A, l_B; L) the coefficient block X[β_B, α_A] maps to
-# U_B X U_A^T in the channel (P(A), P(B), l_A, l_B; L).  P is real on the real Zhou Hamiltonian, so its
+# U_B X U_A^T in the channel (P(A), P(B), l_A, l_B; L).  P is real on the real Hamiltonian, so its
 # antiunitary part acts trivially on the stored real eigenvectors: <v|P v> = ±1 is the parity.
 # Convention (fixed empirically, then verified):  the segment map above sends m -> -m, i.e. it is the
 # paper's P composed with a rotation, and its sign on the vacuum depends on N (N5: -1, N10: +1).  The

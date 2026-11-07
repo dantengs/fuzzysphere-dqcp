@@ -110,7 +110,7 @@ for (nm, terms, r, li, lf) in edges
     e = max(maximum(maximum(abs.(x - y)) for (x, y) in zip(A.overlaps, B.overlaps)), maximum(abs.(A.image_gram - B.image_gram)))
     global ew = max(ew, e); earrays[nm] = A
 end
-check(ew < 1e-12, @sprintf("KK/Gamma2 edges vs frozen reference: %.2e", ew))
+check(ew < 1e-12, @sprintf("KK/Gamma2 edges vs reference construction: %.2e", ew))
 isdefined(lib, :scaled_hits) && println("library builds=$(lib.builds) hits=$(lib.hits) scaled_hits=$(lib.scaled_hits)")
 # normalisation-aware sharing: a scaled operator must equal the directly built one
 if isdefined(Tcc, :scaled_segop)

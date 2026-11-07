@@ -1,6 +1,6 @@
 # Unified entry (v0.1.7): one TOML file, one command, every stage resumable.
 #
-#   julia --project=<env> --threads=T Tcc_v0.0.1/bin/tcc.jl run.toml [stage ...]
+#   julia --project=env --threads=T bin/tcc.jl run.toml [stage ...]
 #
 # Stages (in order): basis -> tune -> spectrum -> targets -> kk -> ope -> summary.
 # run.g may be a number or "tuned" (the stages after `tune` then use out/tune/selected_g.toml).
@@ -20,7 +20,7 @@
 # [threads]  native (8), action (nthreads), workers (nthreads), tile (64), build_blas (16),
 #            solver_blas (16)
 # [targets]  initial_nev (12), max_nev (100), guard (1e-5), independent_check (true)
-# [kk]       thresholds, cache (kk_terms disk cache directory), legacy_calibration
+# [kk]       thresholds, cache (kk_terms disk cache directory)
 # [ope]      edges = [[rank, li, lf], ...] Gamma^2 insertions on (0,0)
 
 const STAGES = ["basis", "tune", "spectrum", "targets", "kk", "ope", "summary"]
