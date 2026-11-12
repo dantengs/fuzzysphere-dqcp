@@ -17,7 +17,7 @@
 # and unpack it on the cluster.  env/Manifest.toml refers to deps/FuzzifiED.jl by a relative path, so the copy works
 # from any location.  The compile caches are rebuilt on the first run on each CPU type (about a minute).
 
-export TCC_REPO=${TCC_REPO:-/path/to/fuzzysphere-dqcp-template}   # this repository
+export TCC_REPO=${TCC_REPO:-/path/to/fuzzysphere-dqcp}   # this repository
 export TCC_DATA=${TCC_DATA:-/path/to/your/data}                   # data root: all outputs go here
 export JULIA=${JULIA:-julia}                                      # Julia 1.11 (validated with 1.11.7)
 

@@ -28,8 +28,8 @@ Disk: about 110 MB for all outputs, plus about 150 MB of Julia packages. Memory:
 ## 0. Get the code and choose where the data go
 
 ```bash
-git clone https://github.com/dantengs/fuzzysphere-dqcp-template.git
-cd fuzzysphere-dqcp-template
+git clone https://github.com/dantengs/fuzzysphere-dqcp.git
+cd fuzzysphere-dqcp
 cp user.example.toml user.toml
 ```
 

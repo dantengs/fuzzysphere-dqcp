@@ -26,8 +26,8 @@ gate 会让残差或窗口不合格的 run 停下来，不会放宽任何门槛�
 ## 0. 获取代码，选定数据位置
 
 ```bash
-git clone https://github.com/dantengs/fuzzysphere-dqcp-template.git
-cd fuzzysphere-dqcp-template
+git clone https://github.com/dantengs/fuzzysphere-dqcp.git
+cd fuzzysphere-dqcp
 cp user.example.toml user.toml
 ```
 

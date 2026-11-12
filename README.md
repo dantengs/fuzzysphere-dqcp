@@ -1,4 +1,4 @@
-# fuzzysphere-dqcp-template
+# fuzzysphere-dqcp
 
 **English** · [中文](#中文简介)
 
@@ -30,7 +30,7 @@ repository; your own data stay in a directory you choose.
 ## Quick start
 
 ```bash
-git clone https://github.com/dantengs/fuzzysphere-dqcp-template.git && cd fuzzysphere-dqcp-template
+git clone https://github.com/dantengs/fuzzysphere-dqcp.git && cd fuzzysphere-dqcp
 cp user.example.toml user.toml      # set [paths] data_root: where all outputs go (default ./data, ignored by git)
 julia deps/setup_env.jl             # once: installs and checks the Julia environment (about 2 minutes)
 julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml
@@ -75,15 +75,22 @@ self-contained installation with one Julia depot, offline; also for clusters wit
 
 Each has a Chinese version under `docs/zh/`.
 
+## How this code was developed
+
+All code in this repository was developed by AI models: **ChatGPT** (OpenAI, including its Codex coding agent) and
+**Claude Code** (Anthropic). Who wrote which part is listed in [AUTHORS.md](AUTHORS.md).
+
 ## Acknowledgements
 
 This repository contains the latest version of Tcc and the primary/descendant analysis codes; it does not include
 earlier code.
 
-- **FuzzifiED.** Tcc is built on [FuzzifiED](https://github.com/FuzzifiED/FuzzifiED.jl) 2.0.1 by Zheng Zhou
-  ([arXiv:2503.00100](https://arxiv.org/abs/2503.00100)), and its 2+2 segment construction of the SO(5) DQCP model
-  (quantum numbers, sectors, Hamiltonian and C₂ terms) follows the FuzzifiED example
-  `examples/so3lver/so5_dqcp_spectrum.jl`. We thank Zheng Zhou for making this code open source.
+- **The code of Zheng Zhou and collaborators.** We learned from the open-source code of Zheng Zhou and the
+  FuzzifiED contributors while developing Tcc: the library [FuzzifiED](https://github.com/FuzzifiED/FuzzifiED.jl)
+  ([arXiv:2503.00100](https://arxiv.org/abs/2503.00100)) and its examples. Tcc is built on FuzzifiED 2.0.1, and its
+  2+2 segment construction of the SO(5) DQCP model (quantum numbers, sectors, Hamiltonian and C₂ terms) follows the
+  FuzzifiED example `examples/so3lver/so5_dqcp_spectrum.jl`. We thank Zheng Zhou and the FuzzifiED contributors for
+  making their code open source.
 - **Model and tuning criterion.** Z. Zhou, L. Hu, W. Zhu, Y.-C. He, *The SO(5) deconfined phase transition under the
   fuzzy sphere microscope: approximate conformal symmetry, pseudo-criticality, and operator spectrum*,
   [arXiv:2306.16435](https://arxiv.org/abs/2306.16435), Phys. Rev. X **14**, 021044 (2024).
@@ -100,7 +107,7 @@ earlier code.
     groundstate on the (fuzzy) sphere*, [arXiv:2611.03817](https://arxiv.org/abs/2611.03817) — the energy-difference
     weight of eq. (4.2), reported by rule C as a reference column.
 
-If you use this template, please cite these works.
+If you use this code, please cite these works.
 
 ## Licence and credits
 
@@ -133,7 +140,7 @@ primary 与 descendant（Python，`analysis/`）。从零重跑小 N 计算所�
 ### 快速上手
 
 ```bash
-git clone https://github.com/dantengs/fuzzysphere-dqcp-template.git && cd fuzzysphere-dqcp-template
+git clone https://github.com/dantengs/fuzzysphere-dqcp.git && cd fuzzysphere-dqcp
 cp user.example.toml user.toml      # 设置 [paths] data_root：所有输出写到这里（默认 ./data，已被 git 忽略）
 julia deps/setup_env.jl             # 一次：安装并核对 Julia 环境（约 2 分钟）
 julia --project=env --threads=8 bin/tcc.jl configs/quickstart_N5.toml
@@ -176,13 +183,19 @@ python tools/check_quickstart.py data/results/quickstart/N5   # 换成你的 dat
 | [AI_GUIDE](docs/zh/AI_GUIDE.md) | 借助 AI coding agent 使用和检查代码（[AGENTS.md](AGENTS.md) 是 agent 自己的说明文件） |
 | [deps/README](deps/README.md) | Julia 环境 |
 
+### 代码的开发方式
+
+本仓库的全部代码由 AI 模型开发：**ChatGPT**（OpenAI，包括其编程助手 Codex）和 **Claude Code**（Anthropic）。各部分由谁编写
+见 [AUTHORS.md](AUTHORS.md)。
+
 ### 致谢
 
 本仓库只包含 Tcc 的最新版本和 primary/descendant 分析代码，不包含更早的代码。
 
-- **FuzzifiED。** Tcc 基于周正（Zheng Zhou）开源的 [FuzzifiED](https://github.com/FuzzifiED/FuzzifiED.jl) 2.0.1
-  （[arXiv:2503.00100](https://arxiv.org/abs/2503.00100)）；SO(5) DQCP 模型的 2+2 segment 构造（量子数、sector、哈密顿量与
-  C₂ 项）参考了 FuzzifiED 的示例 `examples/so3lver/so5_dqcp_spectrum.jl`。感谢周正开源这套代码。
+- **周正等人的代码。** 开发 Tcc 时，我们学习了周正（Zheng Zhou）与 FuzzifiED 贡献者的开源代码：
+  [FuzzifiED](https://github.com/FuzzifiED/FuzzifiED.jl) 库（[arXiv:2503.00100](https://arxiv.org/abs/2503.00100)）及其示例。
+  Tcc 以 FuzzifiED 2.0.1 为基础，SO(5) DQCP 模型的 2+2 segment 构造（量子数、sector、哈密顿量与 C₂ 项）参考了 FuzzifiED 的示例
+  `examples/so3lver/so5_dqcp_spectrum.jl`。感谢周正和 FuzzifiED 的贡献者开源他们的代码。
 - **模型与 tuning 判据。** Z. Zhou, L. Hu, W. Zhu, Y.-C. He，[arXiv:2306.16435](https://arxiv.org/abs/2306.16435)，
   Phys. Rev. X **14**, 021044 (2024)。
 - **KK projection 与 primary/descendant 分析**建立在以下关于 fuzzy sphere 共形生成元的工作之上，谨向作者致谢：
@@ -194,7 +207,7 @@ python tools/check_quickstart.py data/results/quickstart/N5   # 换成你的 dat
   - R. Ramirez Camasca, X. Li, T.-C. Lin, J. McGreevy，[arXiv:2611.03817](https://arxiv.org/abs/2611.03817)：
     式 (4.2) 的能差权重，规则 C 把它作为参考列输出。
 
-使用本模板时，请引用以上工作。
+使用本代码时，请引用以上工作。
 
 ### 许可证与署名
 
