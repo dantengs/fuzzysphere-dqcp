@@ -1,7 +1,10 @@
 #!/bin/bash
-# One Tcc plan as a Slurm job.  Copy to cluster/<name>.sbatch (ignored by git), edit the #SBATCH lines, then
-#   sbatch cluster/<name>.sbatch configs/examples/N08.toml [step ...]
-# Paths: TCC_REPO = this repository on the cluster, TCC_DATA = your data root (outputs go there), JULIA = Julia 1.11.
+# One Tcc plan (or some of its steps) as a Slurm job.  Copy to cluster/<name>.sbatch (ignored by git), edit the #SBATCH
+# lines, then for example
+#   sbatch cluster/tcc.sbatch configs/examples/N08.toml
+#   sbatch cluster/tcc.sbatch configs/examples/N12.toml stageb --set=stageb.step=windows --set=stageb.windows=[2]
+# The environment comes from cluster/environment.sh (copy of cluster/environment.example.sh) or the file $TCC_ENV;
+# it sets TCC_REPO (this repository), TCC_DATA (your data root, where all outputs go), JULIA and the one Julia depot.
 #SBATCH -J tcc
 #SBATCH -N 1
 #SBATCH -c 64
@@ -11,8 +14,8 @@
 ##SBATCH -p <partition>
 ##SBATCH -A <account>
 set -euo pipefail
+source "${TCC_ENV:-${TCC_REPO:?set TCC_REPO or TCC_ENV}/cluster/environment.sh}"
 : "${TCC_REPO:?set TCC_REPO}" "${TCC_DATA:?set TCC_DATA}"
-JULIA=${JULIA:-julia}
 cd "$TCC_REPO"
 # commit recorded in every manifest (the code also reads it from git when available)
 export TCC_GIT_COMMIT=${TCC_GIT_COMMIT:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}

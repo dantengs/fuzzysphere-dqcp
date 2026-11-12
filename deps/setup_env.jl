@@ -12,6 +12,9 @@
 #    (src/eigsolve/lockedlanczos.jl, changes in src/KrylovKit.jl and src/algorithms.jl), an addition that Tcc
 #    never calls; the registered release is used and these files are reported as the expected difference.
 # Afterwards:  julia --project=env --threads=8 bin/tcc.jl run.toml
+# Packages go to the first entry of JULIA_DEPOT_PATH (default ~/.julia).  For a self-contained installation that can be
+# copied to a cluster without internet, set JULIA_DEPOT_PATH to one directory first (cluster/environment.example.sh,
+# docs/en/DATA_LAYOUT.md section 6).
 using Pkg, SHA, TOML
 const ROOT = dirname(@__DIR__); const ENVDIR = joinpath(ROOT, "env"); const FZ = joinpath(@__DIR__, "FuzzifiED.jl")
 const PATCH = joinpath(@__DIR__, "FuzzifiED-2.0.1", "comp_operator.jl"); const REL = "src/so3lver/core/comp_operator.jl"
@@ -27,7 +30,9 @@ Pkg.add([PackageSpec(name="FuzzifiED", version="2.0.1"), PackageSpec(name="Krylo
 reg = pkgroot("FuzzifiED")                                                     # the registered 2.0.1 tree (read-only)
 rm(FZ; recursive=true, force=true); cp(reg, FZ); chmod(FZ, 0o755; recursive=true)
 cp(PATCH, joinpath(FZ, REL); force=true)
-Pkg.rm("FuzzifiED"); Pkg.develop(path=FZ)
+Pkg.rm("FuzzifiED")
+cd(() -> Pkg.develop(path=joinpath("..", "deps", "FuzzifiED.jl")), ENVDIR)  # relative path: the repository (with its depot) can be moved or copied
+
 Pkg.compat("FuzzifiED", "=2.0.1")                                             # Pkg.rm dropped it; keeps env/Project.toml as tracked
 Pkg.instantiate()
 

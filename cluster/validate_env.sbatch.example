@@ -1,0 +1,36 @@
+#!/bin/bash
+# Check a Tcc environment on one node type: offline precompile and load from the one depot only, then the core
+# regression and the OPE reference test.  Run it once per CPU type after deps/setup_env.jl and after any change of the
+# environment.  Copy to cluster/validate_env.sbatch (ignored by git), edit the #SBATCH lines, then
+#   sbatch cluster/validate_env.sbatch                 # results in $TCC_DATA/validation/<host>-<job>/
+#   sbatch cluster/validate_env.sbatch <golden dir>    # also compare with test/regress.jl output of another environment
+# Expected: LOAD_ONLY_DEPOT_PASS, REGRESS_PASS N=5 (and "vs golden" lines <= 1e-10), OPE_REFERENCE_PASS.
+#SBATCH -J tcc_validate
+#SBATCH -N 1
+#SBATCH -c 16
+#SBATCH --mem=32G
+#SBATCH -t 01:00:00
+#SBATCH -o tcc_validate-%j.out
+##SBATCH -p <partition>
+##SBATCH -A <account>
+set -uo pipefail
+source "${TCC_ENV:-${TCC_REPO:?set TCC_REPO or TCC_ENV}/cluster/environment.sh}"
+cd "$TCC_REPO"
+V=$TCC_DATA/validation/$(hostname -s)-${SLURM_JOB_ID:-local}; mkdir -p "$V"
+J=("$JULIA" --startup-file=no --project=env)
+echo "host $(hostname)  depot $JULIA_DEPOT_PATH  out $V"
+
+"${J[@]}" -e '
+  using Pkg; Pkg.instantiate(); Pkg.precompile()
+  using FuzzifiED, KrylovKit
+  depot = ENV["JULIA_DEPOT_PATH"]; repo = pwd()
+  outside = [string(m) => pathof(m) for m in values(Base.loaded_modules)
+             if pathof(m) !== nothing && !any(r -> startswith(pathof(m), r), (repo, depot, normpath(Sys.STDLIB)))]
+  println("FuzzifiED ", pathof(FuzzifiED)); println("KrylovKit ", pathof(KrylovKit))
+  println(isempty(outside) && DEPOT_PATH == [depot] ? "LOAD_ONLY_DEPOT_PASS" : "LOAD_OUTSIDE_DEPOT $(DEPOT_PATH) $(outside)")'
+"$TCC_PYTHON" -c 'import numpy, pandas; print("python numpy", numpy.__version__, "pandas", pandas.__version__)'
+
+"${J[@]}" --threads=8 test/regress.jl 5 "$V/regress" ${1:+"$1"} > "$V/regress.log" 2>&1
+echo "regress rc=$?"; grep -E 'golden|REGRESS_' "$V/regress.log"
+"${J[@]}" --threads=8 test/t9_ope.jl "$V/t9" > "$V/t9.log" 2>&1
+echo "t9_ope rc=$?"; grep -E 'OPE_REFERENCE' "$V/t9.log"

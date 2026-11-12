@@ -3,6 +3,9 @@ user.toml
 analysis/paths.local.json
 cluster/*.sbatch
 !cluster/*.sbatch.example
+cluster/environment.sh
+# the one Julia depot of a self-contained installation (cluster/environment.example.sh)
+depot/
 # built by deps/setup_env.jl
 env/Manifest.toml
 deps/FuzzifiED.jl/
