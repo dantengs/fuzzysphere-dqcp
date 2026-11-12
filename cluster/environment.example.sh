@@ -27,3 +27,6 @@ export JULIA_PKG_OFFLINE=${JULIA_PKG_OFFLINE:-true}
 export JULIA_PKG_PRECOMPILE_AUTO=0                 # compile on first use, never on Pkg operations
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1    # Tcc sets BLAS and FuzzifiED threads itself ([threads] of a plan)
 export TCC_PYTHON=${TCC_PYTHON:-python3}           # Python with numpy and pandas (step parity_join, analyses)
+# If that Python lacks numpy/pandas and pip is not available: a directory holding them (e.g. `pip install --target DIR
+# numpy pandas` on a machine with the same Python version and platform, then copied here).
+if [ -n "${TCC_PYTHONPATH:-}" ]; then export PYTHONPATH=$TCC_PYTHONPATH${PYTHONPATH:+:$PYTHONPATH}; fi

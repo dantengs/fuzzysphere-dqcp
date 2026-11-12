@@ -23,6 +23,9 @@ julia --project=env --threads=8 test/t15_stageb_restart.jl 5 <data root>/tests/t
 ```
 The whole small-N reproduction, including the N6 pool and the rule C analysis of N5
 (`analysis/tools/demo_small_n.py`), is `docs/en/REPRODUCE.md`.
+On a cluster: `cluster/environment.example.sh` (one depot, offline), `cluster/validate_env.sbatch.example` (run once per
+node type), `cluster/tcc.sbatch.example`; `bin/tcc.jl plan.toml step --set=table.key=value` overrides a plan key for one
+call (the effective plan goes to `<data root>/plans/`). Job chain of the largest N: `docs/en/DATA_LAYOUT.md` §6.3.
 Start with N = 4 or 5 (the N5 full chain takes about 3 minutes with 8 threads on a desktop). Each further N multiplies the
 largest block dimension by about 8 (METHODS §2.4: N7 4 280, N9 2.5×10⁵, N11 1.8×10⁷); N ≥ 10 needs a cluster node and
 N12 needs hundreds of GB and days. Before starting N ≥ 8, tell the user the block dimensions and ask.

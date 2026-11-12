@@ -28,7 +28,11 @@ echo "host $(hostname)  depot $JULIA_DEPOT_PATH  out $V"
              if pathof(m) !== nothing && !any(r -> startswith(pathof(m), r), (repo, depot, normpath(Sys.STDLIB)))]
   println("FuzzifiED ", pathof(FuzzifiED)); println("KrylovKit ", pathof(KrylovKit))
   println(isempty(outside) && DEPOT_PATH == [depot] ? "LOAD_ONLY_DEPOT_PASS" : "LOAD_OUTSIDE_DEPOT $(DEPOT_PATH) $(outside)")'
-"$TCC_PYTHON" -c 'import numpy, pandas; print("python numpy", numpy.__version__, "pandas", pandas.__version__)'
+"$TCC_PYTHON" -c '
+import importlib
+for m, need in (("numpy", "Tcc step parity_join and the analyses"), ("pandas", "the analyses in analysis/ only")):
+    try: print("python", m, importlib.import_module(m).__version__)
+    except ImportError: print("python", m, "MISSING (needed by", need + ")")'
 
 "${J[@]}" --threads=8 test/regress.jl 5 "$V/regress" ${1:+"$1"} > "$V/regress.log" 2>&1
 echo "regress rc=$?"; grep -E 'golden|REGRESS_' "$V/regress.log"

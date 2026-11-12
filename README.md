@@ -25,7 +25,7 @@ repository; your own data stay in a directory you choose.
 | Julia | 1.11 (tested 1.11.7; e.g. `juliaup add 1.11`) |
 | Python | ≥ 3.10 with numpy and pandas (`pip install -r analysis/requirements.txt`) for the analyses and one join step |
 | Machine | small N: 8 threads, 4 GB memory, about 300 MB of disk (outputs and Julia packages); internet access once, to install the Julia packages |
-| OS | the reproduction below was checked on Windows 11; earlier versions of this code ran the production calculations on Linux clusters (macOS untested) |
+| OS | the reproduction below was checked on Windows 11; on a Linux cluster (AMD EPYC, offline) the installation of `cluster/environment.example.sh` passed `validate_env`, with spectra, C₂ and edges equal to the production environment to 5e-14; the production calculations ran on Linux clusters (macOS untested) |
 
 ## Quick start
 
@@ -54,6 +54,12 @@ full-Q OPE, the (½,½) and (1,1) sectors) in about 2.5 minutes on 8 threads.
 
 Larger N use the same commands with the reference plans `configs/examples/N07.toml … N12.toml`; N ≥ 10 needs a
 cluster node (METHODS §2.4 lists the block dimensions).
+
+**On a cluster.** `cluster/` has the templates the production jobs were run with: `environment.example.sh` (a
+self-contained installation with one Julia depot, offline; also for clusters without internet), `validate_env.sbatch.example`
+(load check, regression and OPE test per node type) and `tcc.sbatch.example` (one plan or some steps per job;
+`--set=table.key=value` changes a plan key for one job). The job chain of the largest N is in
+[DATA_LAYOUT §6](docs/en/DATA_LAYOUT.md).
 
 ## Documentation
 
@@ -122,7 +128,7 @@ primary 与 descendant（Python，`analysis/`）。从零重跑小 N 计算所�
 | Julia | 1.11（已用 1.11.7 测试；例如 `juliaup add 1.11`） |
 | Python | ≥ 3.10，需 numpy、pandas（`pip install -r analysis/requirements.txt`），用于分析和一个 join 步骤 |
 | 机器 | 小 N：8 线程、4 GB 内存、约 300 MB 磁盘（输出与 Julia 包）；首次安装 Julia 包需要联网 |
-| 系统 | 下面的复现在 Windows 11 上核对过；本代码的早期版本在 Linux 集群上运行过生产计算（macOS 未测试） |
+| 系统 | 下面的复现在 Windows 11 上核对过；在 Linux 集群（AMD EPYC，离线）上，按 `cluster/environment.example.sh` 装好的环境通过了 `validate_env`，谱、C₂ 和边与生产环境一致到 5e-14；生产计算在 Linux 集群上完成（macOS 未测试） |
 
 ### 快速上手
 
@@ -150,6 +156,13 @@ python tools/check_quickstart.py data/results/quickstart/N5   # 换成你的 dat
 | 5. N = 5 的 primary/descendant 分析 | KK 导出、κ 门槛、规则 C、家族检验 | 15 秒 |
 
 更大的 N 用同样的命令和参考 plan `configs/examples/N07.toml … N12.toml`；N ≥ 10 需要集群节点（block 维数见 METHODS §2.4）。
+
+**在集群上运行。** `cluster/` 里是生产作业所用的模板：
+- `environment.example.sh`：自包含安装，只用一个 Julia depot，离线运行；也适用于不能联网的集群。
+- `validate_env.sbatch.example`：每种节点做一次加载检查、回归和 OPE 测试。
+- `tcc.sbatch.example`：每个作业跑一个 plan 或其中几个 step；`--set=table.key=value` 只对这一次作业修改 plan 的一个键。
+
+最大 N 的作业顺序见 [DATA_LAYOUT §6](docs/zh/DATA_LAYOUT.md)。
 
 ### 文档
 

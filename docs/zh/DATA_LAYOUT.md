@@ -72,5 +72,60 @@ julia tools/data_inventory.jl configs/inventory_index.toml <数据根目录>/inv
 
 ## 6. 集群
 
-`cluster/tcc.sbatch.example` 运行一个 plan：设置 `TCC_REPO`、`TCC_DATA`、`JULIA`，在你的副本里修改 `#SBATCH` 行（partition、
-account、CPU、内存、时间）。内存估计见 METHODS §2.4（block 维数）和 §2.5（residency、Stage B 内存上限 = 分配的 85 %）。
+### 6.1 环境
+
+`cluster/environment.example.sh` 描述一套自包含安装，原始研究的作业就是在这样的环境里运行的。环境的组成：
+- 一个 Julia depot 存放全部内容：包、二进制 artifact、registry 和编译缓存；
+- Julia 离线运行，作业不会读取别的 depot，也不会联网。
+
+使用方法：复制为 `cluster/environment.sh`（git 不跟踪），设置 `TCC_REPO`、`TCC_DATA`、`JULIA`，每个作业开头 source 它。
+
+```bash
+cp cluster/environment.example.sh cluster/environment.sh       # 修改路径
+source cluster/environment.sh
+JULIA_PKG_OFFLINE=false "$JULIA" deps/setup_env.jl               # 一次，需要联网
+cp cluster/validate_env.sbatch.example cluster/validate_env.sbatch && sbatch cluster/validate_env.sbatch
+```
+
+* **集群不能联网时**，在一台能联网的 Linux x86_64 机器上建好安装（WSL 也可以；二进制 artifact 区分平台），Julia 版本要相同，
+  然后把仓库连同 `depot/` 一起拷到集群，命令写在 `environment.example.sh` 开头。`env/Manifest.toml` 用相对路径指向
+  `deps/FuzzifiED.jl`，所以拷到任何位置都能用。
+* **验证。** `validate_env.sbatch` 在它运行的节点上依次检查三件事：
+  - 所有包都从这一个 depot 加载（`LOAD_ONLY_DEPOT_PASS`）；
+  - `test/regress.jl 5` 通过（`REGRESS_PASS`）；
+  - `test/t9_ope.jl` 通过（`OPE_REFERENCE_PASS`）。
+
+  每种 CPU 跑一次：Julia 按所在 CPU 编译（`-C native`），每种节点第一次运行时会生成自己的编译缓存，约 1 分钟。参数里给出另一套
+  环境的回归目录时，还会与它对照谱、C₂ 和边；换环境后，这些量的差异应在 1e-13 量级。
+* **Python。** step `parity_join` 和分析代码需要带 numpy（以及 pandas）的 Python。集群 Python 没有这些包、又不能用 pip 时，
+  把装有这些包的目录写进 `TCC_PYTHONPATH`（见 `environment.example.sh`）。
+
+### 6.2 作业
+
+`cluster/tcc.sbatch.example` 运行一个 plan 或其中几个 step；在你的副本里修改 `#SBATCH` 行（partition、account、CPU、内存、时间）。
+`--set=table.key=value`（TOML 语法）只对这一次作业修改 plan 的一个键，不用改文件。实际使用的 plan 写到 `<数据根目录>/plans/`，
+并记在输出里。内存估计见 METHODS §2.4（block 维数）和 §2.5（residency、Stage B 内存上限 = 分配的 85 %）。
+
+### 6.3 最大的 N：一个 plan，多个作业
+
+原始研究的 N12 结果就是这样算出来的，下面用 `configs/examples/N12.toml` 写出。每个作业都从检查点续算，中断或失败的作业重新提交即可。
+
+```bash
+P=configs/examples/N12.toml
+sbatch cluster/tcc.sbatch $P coverage ope3 parity parity_join fullq     # 主链：谱、KK、OPE、宇称、full-Q
+# Stage B（半整数扇区）：原始窗口分到几个作业里算，最高的那个窗口远比其他大
+sbatch cluster/tcc.sbatch $P stageb --set=stageb.step=windows --set=stageb.windows=[0,1]
+sbatch cluster/tcc.sbatch $P stageb --set=stageb.step=windows --set=stageb.windows=[2]
+sbatch cluster/tcc.sbatch $P stageb                                     # 窗口完成后算 KK 与 OPE
+sbatch cluster/tcc.sbatch $P rawtarget                                  # 可选：投到完整原始窗口的 OPE
+```
+
+* **N12 的规模。**
+  - segment basis 约 50 GB，最大的 block 需要数百 GB 内存。
+  - 半整数扇区的 L2 窗口（维数 1.4×10⁸，183 个态）在一台 1.5 TB 内存的节点上算了约两周，检查点约 190 GiB。
+    其中好几天花在旧版窗口证书最后的补空间检验上；本版本的默认证书改为多求几个态（`[stageb] extra_states`），不再做这项检验。
+  - `partial_checkpoints = true`（默认）时，窗口作业每扩一次窗口就存一次盘；`--set=stageb.stop_after_k=k` 让它在存够 k 个态后正常退出。
+* **分析用的导出**（`analysis/`，见 docs/zh/ANALYSIS.md §2）要在数据所在的机器上运行：
+  - `analysis/hardgate/cluster/export_kk.jl <run.out> <out>`
+  - `export_stageB.jl <stageb out> <out>`
+  - `export_ope_edges.jl <fullq out> <out>`

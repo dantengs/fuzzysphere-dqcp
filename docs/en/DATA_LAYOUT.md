@@ -77,6 +77,60 @@ written into the run directory. Check `F` in `physics_report.toml` of every run.
 
 ## 6. Cluster
 
-`cluster/tcc.sbatch.example` runs one plan: set `TCC_REPO`, `TCC_DATA` and `JULIA`, edit the `#SBATCH` lines (partition,
-account, CPUs, memory, time) in your copy. Memory guide: METHODS §2.4 (block dimensions) and §2.5 (residency, Stage B
-memory limit = 85 % of the allocation).
+### 6.1 Environment
+
+`cluster/environment.example.sh` describes a self-contained installation, the setup the original study ran its jobs in:
+one Julia depot holds the packages, binary artifacts, the registry and the compile caches; Julia runs offline, so a
+job never reads another depot or the network. Copy it to `cluster/environment.sh` (ignored by git), set `TCC_REPO`,
+`TCC_DATA` and `JULIA`, and source it in every job.
+
+```bash
+cp cluster/environment.example.sh cluster/environment.sh       # edit the paths
+source cluster/environment.sh
+JULIA_PKG_OFFLINE=false "$JULIA" deps/setup_env.jl               # once, needs internet
+cp cluster/validate_env.sbatch.example cluster/validate_env.sbatch && sbatch cluster/validate_env.sbatch
+```
+
+* **Cluster without internet.** Build the installation on a Linux x86_64 machine that has internet (WSL works; binary
+  artifacts are per platform), with the same Julia version, then copy the repository with its `depot/` to the cluster
+  (the commands are in the header of `environment.example.sh`). `env/Manifest.toml` names `deps/FuzzifiED.jl` by a
+  relative path, so the copy works at any location.
+* **Validation.** `validate_env.sbatch` checks on the node it runs on that everything loads from the one depot
+  (`LOAD_ONLY_DEPOT_PASS`), then runs `test/regress.jl 5` and `test/t9_ope.jl` (`REGRESS_PASS`, `OPE_REFERENCE_PASS`).
+  Run it once per CPU type: Julia compiles for the CPU it runs on (`-C native`), so each node type builds its own
+  compile cache once (about a minute). Given the regression directory of another environment as argument, it also
+  compares spectra, C₂ and edges with it; switching environments should change them only at the 1e-13 level.
+* **Python.** Steps `parity_join` and the analyses need Python with numpy (and pandas). If the cluster Python lacks them
+  and pip is not available, put a directory with the packages on `TCC_PYTHONPATH` (see `environment.example.sh`).
+
+### 6.2 Jobs
+
+`cluster/tcc.sbatch.example` runs one plan or some of its steps: edit the `#SBATCH` lines (partition, account, CPUs,
+memory, time) in your copy. `--set=table.key=value` (TOML syntax) changes a key of the plan for one job without editing
+the file; the effective plan is written to `<data root>/plans/` and recorded in the outputs. Memory guide: METHODS §2.4
+(block dimensions) and §2.5 (residency, Stage B memory limit = 85 % of the allocation).
+
+### 6.3 The largest N: one plan, several jobs
+
+This is how the N12 results of the original study were produced, written with `configs/examples/N12.toml`. Every job
+resumes from checkpoints, so a job that is stopped or fails is simply submitted again.
+
+```bash
+P=configs/examples/N12.toml
+sbatch cluster/tcc.sbatch $P coverage ope3 parity parity_join fullq     # main chain: spectrum, KK, OPE, parity, full-Q
+# Stage B (half sector), raw windows split over jobs; the top window is by far the largest
+sbatch cluster/tcc.sbatch $P stageb --set=stageb.step=windows --set=stageb.windows=[0,1]
+sbatch cluster/tcc.sbatch $P stageb --set=stageb.step=windows --set=stageb.windows=[2]
+sbatch cluster/tcc.sbatch $P stageb                                     # KK and OPE on the finished windows
+sbatch cluster/tcc.sbatch $P rawtarget                                  # optional: OPE onto the full raw windows
+```
+
+* N12 sizes: the segment basis is about 50 GB, the largest blocks need hundreds of GB; the L2 window of the half sector
+  (dimension 1.4×10⁸, 183 states) took about two weeks on a node with 1.5 TB, several days of which were the final
+  complement check of the older window certificate (the default certificate of this version replaces that check by a
+  few extra states, `[stageb] extra_states`); its checkpoint is about 190 GiB. With
+  `partial_checkpoints = true` (default) the window job saves every grown step, and `--set=stageb.stop_after_k=k`
+  stops it cleanly once k states are saved.
+* Exports for the analyses (`analysis/`, docs/en/ANALYSIS.md §2), run where the data are:
+  `analysis/hardgate/cluster/export_kk.jl <run.out> <out>`, `export_stageB.jl <stageb out> <out>` and
+  `export_ope_edges.jl <fullq out> <out>`.

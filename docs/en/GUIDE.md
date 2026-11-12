@@ -68,7 +68,12 @@ raw_delta_max = 6.8
 julia --project=env --threads=64 bin/tcc.jl N08.toml                    # all plan steps
 julia --project=env --threads=64 bin/tcc.jl N08.toml stageb             # one step
 julia --project=env --threads=64 bin/tcc.jl N08.toml --data=/scratch/me # another data root
+julia --project=env --threads=64 bin/tcc.jl N08.toml stageb --set=stageb.windows=[0,1] --set=stageb.step=windows
 ```
+
+`--set=table.key=value` changes a key for this call only (value in TOML syntax, a bare word is a string); the effective
+plan is written to `<data root>/plans/` and run from there. Cluster jobs and the job chain of the largest N:
+[DATA_LAYOUT.md](DATA_LAYOUT.md) §6.
 
 * The plan expands into the pipeline keys (`spectrum.blocks` = sectors × L0..lmax in lexicographic order,
   `targets.source_delta_max`, `ope.half`); giving the same key twice with different values is an error.
@@ -87,7 +92,7 @@ Variants that are only keys of the plan:
 |---|---|
 | half and (1,1) sectors, spins 0–4 | `[stageb] sectors = ["half", "11"]`, `lmax = 4` |
 | half sector, spins 0–3 | `[stageb] lmax = 3` |
-| largest N: parallel window jobs | `[stageb] lmax = 1`, `step = "windows"`, `windows = [0, 1]` in one job, `[2]` in another, then `step = "all"` |
+| largest N: parallel window jobs | `[stageb] lmax = 1`; jobs `stageb --set=stageb.step=windows --set=stageb.windows=[0,1]` and `…=[2]`, then `stageb` (DATA_LAYOUT §6.3) |
 | stop a long window job cleanly, resume later | `[stageb] partial_checkpoints = true` (default), `stop_after_k = k` with `step = "windows"` |
 | cheap window certificate | `[stageb] extra_states = 4`, `complement_tol = 1e-6`, `final_polish_trigger = 1e-9` (defaults); `0, 1e-10, 0` = the v0.3.0 certificate |
 | preliminary KK/OPE from a partial top window | `[stageb] prelim_top_window = "<out>/windows/partial/L2_k081.ckpt"`, `prelim_complement = true` |

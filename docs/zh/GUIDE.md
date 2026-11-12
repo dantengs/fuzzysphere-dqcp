@@ -68,7 +68,11 @@ raw_delta_max = 6.8
 julia --project=env --threads=64 bin/tcc.jl N08.toml                    # plan 的全部 step
 julia --project=env --threads=64 bin/tcc.jl N08.toml stageb             # 单个 step
 julia --project=env --threads=64 bin/tcc.jl N08.toml --data=/scratch/me # 换一个数据根目录
+julia --project=env --threads=64 bin/tcc.jl N08.toml stageb --set=stageb.windows=[0,1] --set=stageb.step=windows
 ```
+
+`--set=table.key=value` 只对这一次调用修改一个键（值用 TOML 语法，不带引号的单词按字符串处理）。实际使用的 plan 写到
+`<数据根目录>/plans/`，并从那里运行。集群作业与最大 N 的作业顺序见 [DATA_LAYOUT.md](DATA_LAYOUT.md) §6。
 
 * plan 展开成 pipeline 的键（`spectrum.blocks` = sectors × L0..lmax，按字典序；`targets.source_delta_max`；`ope.half`）；同一个键
   给出两个不同的值会报错。
@@ -86,7 +90,7 @@ julia --project=env --threads=64 bin/tcc.jl N08.toml --data=/scratch/me # 换一
 |---|---|
 | half 与 (1,1) sector，spin 0–4 | `[stageb] sectors = ["half", "11"]`，`lmax = 4` |
 | half sector，spin 0–3 | `[stageb] lmax = 3` |
-| 最大的 N：并行 window 作业 | `[stageb] lmax = 1`、`step = "windows"`，一个作业 `windows = [0, 1]`，另一个 `[2]`，最后 `step = "all"` |
+| 最大的 N：并行 window 作业 | `[stageb] lmax = 1`；作业 `stageb --set=stageb.step=windows --set=stageb.windows=[0,1]` 和 `…=[2]`，最后 `stageb`（DATA_LAYOUT §6.3） |
 | 长 window 作业干净停止、以后续算 | `[stageb] partial_checkpoints = true`（默认），`step = "windows"` 时 `stop_after_k = k` |
 | 低成本 window 证书 | `[stageb] extra_states = 4`、`complement_tol = 1e-6`、`final_polish_trigger = 1e-9`（默认）；`0, 1e-10, 0` = v0.3.0 的证书 |
 | 由部分 top window 得到初步 KK/OPE | `[stageb] prelim_top_window = "<out>/windows/partial/L2_k081.ckpt"`、`prelim_complement = true` |
